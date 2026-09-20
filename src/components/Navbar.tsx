@@ -1,0 +1,103 @@
+import React from 'react';
+import { ShoppingBag, Plus, Bell, User as UserIcon, Sparkles } from 'lucide-react';
+import { UserState } from '../types';
+
+interface NavbarProps {
+  user: UserState;
+  onOpenCoinsModal: () => void;
+  onOpenNotifications: () => void;
+  onOpenProfile: () => void;
+  hasUnreadNotifications?: boolean;
+}
+
+export const Navbar: React.FC<NavbarProps> = ({
+  user,
+  onOpenCoinsModal,
+  onOpenNotifications,
+  onOpenProfile,
+  hasUnreadNotifications = true
+}) => {
+  // Format coin balance with dot separator like in the screenshot (e.g. 1.250)
+  const formatCoins = (amount: number) => {
+    return amount.toLocaleString('tr-TR');
+  };
+
+  return (
+    <header className="w-full h-20 border-b border-white/[0.07] bg-[#090b10]/95 backdrop-blur-md px-4 sm:px-8 flex items-center justify-between sticky top-0 z-40">
+      {/* Left: Brand / Market Header */}
+      <div className="flex items-center gap-3.5">
+        <div className="w-11 h-11 rounded-xl bg-[#131622] border border-white/10 flex items-center justify-center text-white shadow-inner">
+          <ShoppingBag className="w-5 h-5 text-slate-200 stroke-[1.8]" />
+        </div>
+        <div>
+          <div className="flex items-center gap-2">
+            <h1 className="text-xl font-bold text-white tracking-tight font-heading">Market</h1>
+            {user.isPremium && (
+              <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-gradient-to-r from-amber-500/20 to-purple-500/20 text-amber-300 border border-amber-500/30">
+                VIP
+              </span>
+            )}
+          </div>
+          <p className="text-xs text-slate-400 font-medium">Coinlerinle özel ürünler satın al!</p>
+        </div>
+      </div>
+
+      {/* Right Controls: Coin Counter, Notifications, Avatar */}
+      <div className="flex items-center gap-3 sm:gap-4">
+        {/* Coin Balance Pill */}
+        <div className="flex items-center bg-[#131622] border border-white/10 rounded-full pl-3 pr-1.5 py-1.5 gap-2.5 shadow-sm hover:border-amber-500/40 transition-colors">
+          {/* Gold Coin Icon */}
+          <div className="w-6 h-6 rounded-full bg-gradient-to-tr from-amber-600 via-amber-400 to-yellow-200 flex items-center justify-center shadow-[0_0_8px_rgba(245,158,11,0.5)]">
+            <span className="text-[11px] font-black text-amber-950 leading-none">★</span>
+          </div>
+
+          <span className="text-sm sm:text-base font-bold text-white tracking-wide font-mono">
+            {formatCoins(user.coins)}
+          </span>
+
+          {/* Plus / Top-up button */}
+          <button
+            id="btn-coin-topup"
+            onClick={onOpenCoinsModal}
+            title="Coin Yükle"
+            className="w-6 h-6 rounded-full bg-white/10 hover:bg-white/20 text-slate-200 hover:text-white flex items-center justify-center transition-all active:scale-95"
+          >
+            <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
+          </button>
+        </div>
+
+        {/* Notifications Bell */}
+        <button
+          id="btn-notifications"
+          onClick={onOpenNotifications}
+          className="relative w-10 h-10 rounded-full bg-[#131622] border border-white/10 hover:border-white/20 text-slate-300 hover:text-white flex items-center justify-center transition-colors"
+          title="Bildirimler"
+        >
+          <Bell className="w-4 h-4" />
+          {hasUnreadNotifications && (
+            <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-rose-500 ring-2 ring-[#090b10] shadow-[0_0_6px_rgba(244,63,94,0.8)]" />
+          )}
+        </button>
+
+        {/* Profile Avatar Button */}
+        <button
+          id="btn-profile"
+          onClick={onOpenProfile}
+          className="relative w-10 h-10 rounded-full bg-[#131622] border border-white/15 hover:border-blue-500/60 p-0.5 transition-all group"
+          title="Profilim & Özelleştir"
+        >
+          <div className="w-full h-full rounded-full overflow-hidden bg-[#181c28] flex items-center justify-center">
+            {user.avatarUrl ? (
+              <img src={user.avatarUrl} alt="Profil" referrerPolicy="no-referrer" className="w-full h-full object-cover" />
+            ) : (
+              <UserIcon className="w-5 h-5 text-slate-400 group-hover:text-slate-200 transition-colors" />
+            )}
+          </div>
+          {user.equippedFrameId && (
+            <span className="absolute -inset-0.5 rounded-full border border-blue-400/60 animate-pulse pointer-events-none" />
+          )}
+        </button>
+      </div>
+    </header>
+  );
+};

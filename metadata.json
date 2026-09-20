@@ -1,0 +1,6 @@
+{
+  "name": "Neon Market & ScriptDepo",
+  "description": "Discord tarzı animasyonlu profil kozmetikleri, Roblox scriptleri, executor rehberi ve coin ödüllü günlük görev platformu.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
