@@ -77,7 +77,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
           id: 'frames',
           label: 'Çerçeveler',
           icon: <FrameIcon className="w-4 h-4" />,
-          badge: 'Popüler'
+          badge: '160+'
+        },
+        {
+          id: 'ai-studio',
+          label: '✨ AI Çerçeve Atölyesi',
+          icon: <Sparkles className="w-4 h-4 text-pink-400 animate-pulse" />,
+          badge: 'YENİ'
         },
         {
           id: 'avatars',

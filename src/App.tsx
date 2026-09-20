@@ -11,8 +11,17 @@ import {
   Zap,
   Gamepad2,
   Package,
-  Layers
+  Layers,
+  Heart,
+  Crown,
+  Check,
+  Coins,
+  User,
+  Settings,
+  Wand2
 } from 'lucide-react';
+import { FrameRenderer } from './components/FrameRenderer';
+import { ALL_FRAMES } from './data/framesCatalog';
 import {
   CategoryType,
   Product,
@@ -24,6 +33,7 @@ import {
   ToastMessage
 } from './types';
 import { INITIAL_PRODUCTS } from './data/products';
+import { INITIAL_AI_COMMUNITY_FRAMES } from './data/aiCommunityFrames';
 import {
   SCRIPTS_DATA,
   GAMES_DATA,
@@ -44,6 +54,8 @@ import { PurchaseModal } from './components/PurchaseModal';
 import { PremiumModal } from './components/PremiumModal';
 import { ProfileModal } from './components/ProfileModal';
 import { NotificationsModal } from './components/NotificationsModal';
+import { AiFrameStudioModal } from './components/AiFrameStudioModal';
+import { AiFrameStudioView } from './components/AiFrameStudioView';
 import confetti from 'canvas-confetti';
 
 // Custom Ornamental Frame Icon matching screenshot header
@@ -101,6 +113,10 @@ export default function App() {
     inventory: {
       title: 'Kişisel Envanterim',
       subtitle: 'Satın aldığın ve açtığın tüm kozmetikler ile özel VIP scriptlerin.'
+    },
+    'ai-studio': {
+      title: 'AI Özel Çerçeve Atölyesi',
+      subtitle: 'Hayalindeki çerçeveyi tarif et, AI çizsin ve yapılış zorluğuna göre fiyatını çıkarsın!'
     }
   };
 
@@ -139,6 +155,25 @@ export default function App() {
     }
   }, [user]);
 
+  // AI Community Frames State (Dynamic Showcase)
+  const [communityFrames, setCommunityFrames] = useState<Product[]>(() => {
+    try {
+      const saved = localStorage.getItem('neon_market_community_frames_v1');
+      if (saved) return JSON.parse(saved);
+    } catch {
+      // fallback
+    }
+    return INITIAL_AI_COMMUNITY_FRAMES;
+  });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('neon_market_community_frames_v1', JSON.stringify(communityFrames));
+    } catch {
+      // ignore
+    }
+  }, [communityFrames]);
+
   // Tasks state
   const [tasks, setTasks] = useState<DailyTask[]>(() => {
     try {
@@ -163,12 +198,14 @@ export default function App() {
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState<'default' | 'price-asc' | 'price-desc'>('default');
   const [scriptGameFilter, setScriptGameFilter] = useState<string>('all');
+  const [frameGenderFilter, setFrameGenderFilter] = useState<'all' | 'female' | 'male' | 'popular' | 'mythic'>('all');
 
   // Modals state
   const [isCoinModalOpen, setIsCoinModalOpen] = useState(false);
   const [isPremiumModalOpen, setIsPremiumModalOpen] = useState(false);
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
   const [isNotificationsModalOpen, setIsNotificationsModalOpen] = useState(false);
+  const [isAiStudioModalOpen, setIsAiStudioModalOpen] = useState(false);
   const [hasUnreadNotifications, setHasUnreadNotifications] = useState(true);
   const [purchasingProduct, setPurchasingProduct] = useState<Product | null>(null);
   const [selectedScript, setSelectedScript] = useState<ScriptItem | null>(null);
@@ -251,14 +288,84 @@ export default function App() {
     showToast('Avatar Güncellendi', 'Yeni görsel profilinde görüntülenecek.');
   };
 
+  // Combine base products with AI Community generated frames
+  const allProducts = useMemo(() => {
+    const existingIds = new Set(INITIAL_PRODUCTS.map((p) => p.id));
+    const extraCommunity = communityFrames.filter((cf) => !existingIds.has(cf.id));
+    return [...extraCommunity, ...INITIAL_PRODUCTS];
+  }, [communityFrames]);
+
+  // Buy & Equip AI generated custom frame
+  const handleBuyAndEquipAiFrame = (frame: Product) => {
+    if (user.coins < frame.price) {
+      showToast('Yetersiz Bakiye!', `Bu çerçeve için ${frame.price} Coin gerekiyor.`, 'warning');
+      setIsCoinModalOpen(true);
+      return;
+    }
+
+    // Deduct coins & equip
+    setUser((prev) => ({
+      ...prev,
+      coins: prev.coins - frame.price,
+      ownedProductIds: prev.ownedProductIds.includes(frame.id)
+        ? prev.ownedProductIds
+        : [...prev.ownedProductIds, frame.id],
+      equippedFrameId: frame.id
+    }));
+
+    // Add to community frames showcase so everyone can see it
+    setCommunityFrames((prev) => {
+      const exists = prev.some((f) => f.id === frame.id);
+      if (exists) return prev;
+      return [frame, ...prev];
+    });
+
+    triggerTaskProgress('equip_cosmetic');
+    triggerTaskProgress('view_item');
+    confetti({ particleCount: 80, spread: 70, origin: { y: 0.6 } });
+    showToast(
+      '✨ AI Çerçevesi Kuşanıldı!',
+      `"${frame.name}" başarıyla profilinize uygulandı ve topluluk vitrinine eklendi!`
+    );
+  };
+
+  // Like / Unlike community frame
+  const handleToggleLikeCommunityFrame = (id: string) => {
+    setCommunityFrames((prev) =>
+      prev.map((f) => {
+        if (f.id === id) {
+          const isLiked = !f.isLiked;
+          return {
+            ...f,
+            isLiked,
+            likesCount: (f.likesCount || 0) + (isLiked ? 1 : -1)
+          };
+        }
+        return f;
+      })
+    );
+  };
+
   // Filtered Products (Frames, Avatars, Effects, Badges)
   const filteredProducts = useMemo(() => {
-    let list = INITIAL_PRODUCTS;
+    let list = allProducts;
 
     if (activeCategory === 'inventory') {
       list = list.filter((p) => user.ownedProductIds.includes(p.id));
     } else if (activeCategory !== 'all') {
       list = list.filter((p) => p.category === activeCategory);
+    }
+
+    if (activeCategory === 'frames') {
+      if (frameGenderFilter === 'female') {
+        list = list.filter((p) => p.gender === 'female');
+      } else if (frameGenderFilter === 'male') {
+        list = list.filter((p) => p.gender === 'male');
+      } else if (frameGenderFilter === 'popular') {
+        list = list.filter((p) => p.isPopular || p.rarity === 'mythic');
+      } else if (frameGenderFilter === 'mythic') {
+        list = list.filter((p) => p.rarity === 'mythic' || p.rarity === 'legendary');
+      }
     }
 
     if (searchQuery.trim()) {
@@ -380,6 +487,7 @@ export default function App() {
   const isGamesCategory = activeCategory === 'games';
   const isExecutorsCategory = activeCategory === 'executors';
   const isInventoryCategory = activeCategory === 'inventory';
+  const isAiStudioCategory = activeCategory === 'ai-studio';
 
   return (
     <div className="min-h-screen bg-[#070810] text-slate-100 flex flex-col selection:bg-indigo-500 selection:text-white font-sans">
@@ -395,6 +503,7 @@ export default function App() {
           setHasUnreadNotifications(false);
         }}
         onOpenProfile={() => setIsProfileModalOpen(true)}
+        onOpenAiStudio={() => setIsAiStudioModalOpen(true)}
         hasUnreadNotifications={hasUnreadNotifications}
       />
 
@@ -503,6 +612,97 @@ export default function App() {
             </div>
           </div>
 
+          {/* AI Custom Frame Generator Banner inside Frames view */}
+          {activeCategory === 'frames' && (
+            <div className="relative rounded-2xl bg-gradient-to-r from-indigo-950/60 via-purple-950/50 to-pink-950/50 border border-indigo-500/30 p-4 sm:p-5 mb-5 overflow-hidden flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-lg">
+              <div className="flex items-center gap-3.5">
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-pink-500 flex items-center justify-center text-white shrink-0 shadow-md">
+                  <Sparkles className="w-5 h-5 animate-pulse" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h4 className="text-sm sm:text-base font-bold text-white font-heading">
+                      Aklındaki Çerçeveyi Kendin Yaptır!
+                    </h4>
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-pink-500/20 text-pink-300 border border-pink-500/30">
+                      ✨ AI Atölye
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-300 mt-0.5">
+                    İstediğin renk ve süslemeyi tarif et, AI çizsin ve yapılış zorluğuna göre fiyatını belirlesin. Satın alıp herkese sergile!
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setIsAiStudioModalOpen(true)}
+                className="shrink-0 px-4 py-2 rounded-xl bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 hover:from-indigo-500 hover:to-pink-500 text-white font-bold text-xs flex items-center gap-2 shadow-lg shadow-indigo-600/30 transition-all active:scale-95 cursor-pointer"
+              >
+                <Wand2 className="w-4 h-4" />
+                <span>AI ile Çerçeve Yap</span>
+              </button>
+            </div>
+          )}
+
+          {/* Sub-filters for Frames (150+ Girls & Boys Collections) */}
+          {activeCategory === 'frames' && (
+            <div className="flex flex-wrap items-center gap-2 mb-6 pb-2 overflow-x-auto">
+              <button
+                onClick={() => setFrameGenderFilter('all')}
+                className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all flex items-center gap-1.5 ${
+                  frameGenderFilter === 'all'
+                    ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/30'
+                    : 'bg-[#121522] text-slate-400 hover:text-white border border-white/5'
+                }`}
+              >
+                <span>Tümü ({ALL_FRAMES.length})</span>
+              </button>
+              <button
+                onClick={() => setFrameGenderFilter('female')}
+                className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all flex items-center gap-1.5 ${
+                  frameGenderFilter === 'female'
+                    ? 'bg-gradient-to-r from-pink-500 to-rose-500 text-white shadow-lg shadow-pink-500/30 ring-1 ring-pink-400'
+                    : 'bg-[#121522] text-pink-300 hover:text-white border border-pink-500/20 hover:border-pink-500/40'
+                }`}
+              >
+                <Heart className="w-3.5 h-3.5 fill-pink-400" />
+                <span>💖 Kız Çerçeveleri ({ALL_FRAMES.filter((f) => f.gender === 'female').length})</span>
+              </button>
+              <button
+                onClick={() => setFrameGenderFilter('male')}
+                className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all flex items-center gap-1.5 ${
+                  frameGenderFilter === 'male'
+                    ? 'bg-gradient-to-r from-cyan-500 to-blue-600 text-white shadow-lg shadow-cyan-500/30 ring-1 ring-cyan-400'
+                    : 'bg-[#121522] text-cyan-300 hover:text-white border border-cyan-500/20 hover:border-cyan-500/40'
+                }`}
+              >
+                <Zap className="w-3.5 h-3.5 fill-cyan-400" />
+                <span>⚡ Erkek Çerçeveleri ({ALL_FRAMES.filter((f) => f.gender === 'male').length})</span>
+              </button>
+              <button
+                onClick={() => setFrameGenderFilter('popular')}
+                className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all flex items-center gap-1.5 ${
+                  frameGenderFilter === 'popular'
+                    ? 'bg-amber-500 text-amber-950 font-bold shadow-lg shadow-amber-500/30'
+                    : 'bg-[#121522] text-amber-300 hover:text-white border border-amber-500/20'
+                }`}
+              >
+                <Flame className="w-3.5 h-3.5 fill-amber-400" />
+                <span>🔥 Popüler & VIP</span>
+              </button>
+              <button
+                onClick={() => setFrameGenderFilter('mythic')}
+                className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all flex items-center gap-1.5 ${
+                  frameGenderFilter === 'mythic'
+                    ? 'bg-purple-600 text-white shadow-lg shadow-purple-600/30'
+                    : 'bg-[#121522] text-purple-300 hover:text-white border border-purple-500/20'
+                }`}
+              >
+                <Crown className="w-3.5 h-3.5" />
+                <span>👑 Efsanevi</span>
+              </button>
+            </div>
+          )}
+
           {/* VIEW ROUTING */}
 
           {/* 1. SCRIPTS VIEW */}
@@ -607,6 +807,84 @@ export default function App() {
           {/* 5. INVENTORY VIEW */}
           {isInventoryCategory && (
             <div className="space-y-8">
+              {/* Live Profile Card & Active Appearance Showcase */}
+              <div className="p-6 rounded-3xl bg-gradient-to-r from-[#121628] via-[#0e1220] to-[#161226] border border-white/10 relative overflow-hidden shadow-2xl">
+                {/* Ambient glow */}
+                <div className="absolute top-0 right-0 w-80 h-80 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none" />
+                <div className="absolute bottom-0 left-0 w-60 h-60 bg-purple-500/10 rounded-full blur-3xl pointer-events-none" />
+
+                <div className="flex flex-col md:flex-row items-center gap-6 relative z-10">
+                    {/* Live Rendered Active Frame */}
+                  <div className="relative shrink-0">
+                    <FrameRenderer
+                      frameType={user.equippedFrameId || 'none'}
+                      frameStyle={allProducts.find((f) => f.id === user.equippedFrameId || f.frameType === user.equippedFrameId)?.frameStyle}
+                      avatarUrl={user.avatarUrl}
+                      size="lg"
+                      isAnimated={true}
+                    />
+                    {user.isPremium && (
+                      <span className="absolute -bottom-1 -right-1 w-8 h-8 rounded-full bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center text-amber-950 shadow-lg border-2 border-[#0e1220]">
+                        <Crown className="w-4 h-4 stroke-[2.5]" />
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Profile Info */}
+                  <div className="flex-1 text-center md:text-left">
+                    <div className="flex flex-wrap items-center justify-center md:justify-start gap-2.5">
+                      <h3 className="text-xl sm:text-2xl font-bold text-white font-heading">
+                        {user.name}
+                      </h3>
+                      <span className="text-xs text-indigo-400 font-mono bg-indigo-500/15 px-2.5 py-0.5 rounded-lg border border-indigo-500/20">
+                        {user.tag}
+                      </span>
+                      {user.isPremium && (
+                        <span className="text-[11px] font-bold text-amber-300 bg-amber-500/15 px-2.5 py-0.5 rounded-full border border-amber-500/30 flex items-center gap-1">
+                          <Crown className="w-3 h-3 text-amber-400" /> VIP Üye
+                        </span>
+                      )}
+                    </div>
+
+                    <p className="text-xs text-slate-300 mt-2 flex items-center justify-center md:justify-start gap-2">
+                      <Sparkles className="w-4 h-4 text-amber-400 shrink-0" />
+                      <span>
+                        Aktif Kuşanılan Çerçeve:{' '}
+                        <strong className="text-white font-semibold">
+                          {allProducts.find((f) => f.id === user.equippedFrameId || f.frameType === user.equippedFrameId)?.name || 'Standart Çerçevesiz'}
+                        </strong>
+                      </span>
+                    </p>
+
+                    <div className="flex flex-wrap items-center justify-center md:justify-start gap-3 mt-4 pt-4 border-t border-white/10 text-xs text-slate-300">
+                      <div className="flex items-center gap-1.5 bg-black/40 px-3 py-1.5 rounded-xl border border-white/5">
+                        <Coins className="w-4 h-4 text-amber-400" />
+                        <span className="font-semibold text-white">{user.coins.toLocaleString('tr-TR')}</span>
+                        <span className="text-slate-400">Coin</span>
+                      </div>
+                      <div className="flex items-center gap-1.5 bg-black/40 px-3 py-1.5 rounded-xl border border-white/5">
+                        <Package className="w-4 h-4 text-indigo-400" />
+                        <span className="font-semibold text-white">{user.ownedProductIds.length}</span>
+                        <span className="text-slate-400">Satın Alınan Kozmetik</span>
+                      </div>
+                      <div className="flex items-center gap-1.5 bg-black/40 px-3 py-1.5 rounded-xl border border-white/5">
+                        <FileCode className="w-4 h-4 text-emerald-400" />
+                        <span className="font-semibold text-white">{user.unlockedScriptIds.length}</span>
+                        <span className="text-slate-400">Açık Script</span>
+                      </div>
+
+                      <button
+                        onClick={() => setIsProfileModalOpen(true)}
+                        className="ml-auto px-4 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold flex items-center gap-2 transition-all shadow-lg shadow-indigo-600/30 active:scale-95 text-xs"
+                      >
+                        <Settings className="w-3.5 h-3.5" />
+                        <span>Profili & Dolabı Aç</span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
               {/* Owned Cosmetics Section */}
               <div>
                 <h3 className="text-base font-bold text-white font-heading mb-4 flex items-center gap-2">
@@ -657,6 +935,17 @@ export default function App() {
                 </div>
               </div>
             </div>
+          )}
+
+          {/* 6. AI FRAME STUDIO VIEW */}
+          {isAiStudioCategory && (
+            <AiFrameStudioView
+              user={user}
+              onBuyAndEquip={handleBuyAndEquipAiFrame}
+              onOpenCoinModal={() => setIsCoinModalOpen(true)}
+              communityFrames={communityFrames}
+              onToggleLikeCommunityFrame={handleToggleLikeCommunityFrame}
+            />
           )}
         </main>
       </div>
@@ -719,7 +1008,7 @@ export default function App() {
       <ProfileModal
         isOpen={isProfileModalOpen}
         user={user}
-        allProducts={INITIAL_PRODUCTS}
+        allProducts={allProducts}
         onClose={() => setIsProfileModalOpen(false)}
         onEquipFrame={handleEquipFrame}
         onUpdateAvatar={handleUpdateAvatar}
@@ -733,6 +1022,20 @@ export default function App() {
           setHasUnreadNotifications(false);
           showToast('Bildirimler Temizlendi', 'Tüm bildirimler okundu olarak işaretlendi.');
         }}
+      />
+
+      {/* AI Frame Studio Modal */}
+      <AiFrameStudioModal
+        isOpen={isAiStudioModalOpen}
+        user={user}
+        onClose={() => setIsAiStudioModalOpen(false)}
+        onBuyAndEquip={handleBuyAndEquipAiFrame}
+        onOpenCoinModal={() => {
+          setIsAiStudioModalOpen(false);
+          setIsCoinModalOpen(true);
+        }}
+        communityFrames={communityFrames}
+        onToggleLikeCommunityFrame={handleToggleLikeCommunityFrame}
       />
     </div>
   );

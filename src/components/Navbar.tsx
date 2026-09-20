@@ -1,12 +1,14 @@
 import React from 'react';
-import { ShoppingBag, Plus, Bell, User as UserIcon, Sparkles } from 'lucide-react';
+import { ShoppingBag, Plus, Bell, Sparkles } from 'lucide-react';
 import { UserState } from '../types';
+import { FrameRenderer } from './FrameRenderer';
 
 interface NavbarProps {
   user: UserState;
   onOpenCoinsModal: () => void;
   onOpenNotifications: () => void;
   onOpenProfile: () => void;
+  onOpenAiStudio?: () => void;
   hasUnreadNotifications?: boolean;
 }
 
@@ -15,6 +17,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   onOpenCoinsModal,
   onOpenNotifications,
   onOpenProfile,
+  onOpenAiStudio,
   hasUnreadNotifications = true
 }) => {
   // Format coin balance with dot separator like in the screenshot (e.g. 1.250)
@@ -66,6 +69,21 @@ export const Navbar: React.FC<NavbarProps> = ({
           </button>
         </div>
 
+        {/* AI Frame Studio Quick-Access Button */}
+        {onOpenAiStudio && (
+          <button
+            id="btn-navbar-ai-studio"
+            onClick={onOpenAiStudio}
+            className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gradient-to-r from-indigo-600/30 via-purple-600/30 to-pink-600/30 hover:from-indigo-600/50 hover:to-pink-600/50 border border-indigo-400/40 text-white text-xs font-bold transition-all shadow-sm active:scale-95 group"
+            title="AI ile Özel Çerçeve Üret"
+          >
+            <Sparkles className="w-3.5 h-3.5 text-pink-400 animate-pulse group-hover:rotate-12 transition-transform" />
+            <span className="bg-gradient-to-r from-white via-indigo-100 to-pink-200 bg-clip-text text-transparent">
+              ✨ AI Çerçeve Yap
+            </span>
+          </button>
+        )}
+
         {/* Notifications Bell */}
         <button
           id="btn-notifications"
@@ -79,23 +97,21 @@ export const Navbar: React.FC<NavbarProps> = ({
           )}
         </button>
 
-        {/* Profile Avatar Button */}
+        {/* Profile Avatar Button with Live Equipped Frame */}
         <button
           id="btn-profile"
           onClick={onOpenProfile}
-          className="relative w-10 h-10 rounded-full bg-[#131622] border border-white/15 hover:border-blue-500/60 p-0.5 transition-all group"
-          title="Profilim & Özelleştir"
+          className="relative flex items-center justify-center p-0.5 rounded-full hover:scale-105 active:scale-95 transition-all group"
+          title={`${user.name} - Profilim & Envanter`}
         >
-          <div className="w-full h-full rounded-full overflow-hidden bg-[#181c28] flex items-center justify-center">
-            {user.avatarUrl ? (
-              <img src={user.avatarUrl} alt="Profil" referrerPolicy="no-referrer" className="w-full h-full object-cover" />
-            ) : (
-              <UserIcon className="w-5 h-5 text-slate-400 group-hover:text-slate-200 transition-colors" />
-            )}
+          <div className="relative">
+            <FrameRenderer
+              frameType={user.equippedFrameId || 'none'}
+              avatarUrl={user.avatarUrl}
+              size="xs"
+              isAnimated={true}
+            />
           </div>
-          {user.equippedFrameId && (
-            <span className="absolute -inset-0.5 rounded-full border border-blue-400/60 animate-pulse pointer-events-none" />
-          )}
         </button>
       </div>
     </header>

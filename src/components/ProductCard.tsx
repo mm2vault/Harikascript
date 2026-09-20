@@ -33,18 +33,33 @@ export const ProductCard: React.FC<ProductCardProps> = ({
     >
       {/* Top Bar inside card: Animated Badge or Rarity */}
       <div className="flex items-center justify-between z-10 w-full mb-1">
-        {product.isPopular ? (
-          <span className="text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-amber-500/10 text-amber-300 border border-amber-500/20">
-            Popüler
-          </span>
-        ) : (
-          <div />
-        )}
+        <div className="flex items-center gap-1.5 flex-wrap">
+          {product.isAiGenerated && (
+            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-gradient-to-r from-purple-500/20 to-pink-500/20 text-pink-300 border border-pink-500/30">
+              ✨ AI {product.createdBy ? `@${product.createdBy}` : 'Özel'}
+            </span>
+          )}
+          {product.gender === 'female' && (
+            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-pink-500/15 text-pink-300 border border-pink-500/30">
+              🌸 Kız
+            </span>
+          )}
+          {product.gender === 'male' && (
+            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-cyan-500/15 text-cyan-300 border border-cyan-500/30">
+              ⚡ Erkek
+            </span>
+          )}
+          {product.isPopular && (
+            <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-300 border border-amber-500/20">
+              Popüler
+            </span>
+          )}
+        </div>
 
         {product.isAnimated && (
-          <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#111628] border border-indigo-400/30 shadow-sm">
+          <div className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#111628] border border-indigo-400/30 shadow-sm">
             <Play className="w-2.5 h-2.5 fill-white text-white" />
-            <span className="text-[11px] font-medium text-slate-200 tracking-wide">
+            <span className="text-[10px] font-medium text-slate-200 tracking-wide">
               Animasyonlu
             </span>
           </div>
@@ -53,9 +68,10 @@ export const ProductCard: React.FC<ProductCardProps> = ({
 
       {/* Center Visual: Frame or Avatar Preview with Interactive Hover Try-On */}
       <div className="relative my-4 flex items-center justify-center min-h-[190px]">
-        {product.category === 'frames' || product.frameType ? (
+        {product.category === 'frames' || product.frameType || product.frameStyle ? (
           <FrameRenderer
-            frameType={product.frameType}
+            frameType={product.frameType || product.id}
+            frameStyle={product.frameStyle}
             avatarUrl={userAvatarUrl}
             size="md"
             isAnimated={product.isAnimated}

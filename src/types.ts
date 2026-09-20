@@ -4,32 +4,43 @@ export type CategoryType =
   | 'games'
   | 'executors'
   | 'frames'
+  | 'ai-studio'
   | 'avatars'
   | 'effects'
   | 'badges'
   | 'inventory';
 
-export type CosmeticFrameType =
-  | 'gothic_black'
-  | 'radiance'
-  | 'neon_ring'
-  | 'cyber_hex'
-  | 'fire_aura'
-  | 'void_dragon'
-  | 'cosmic_star'
-  | 'glitch_matrix'
-  | 'aurora_borealis'
-  | 'flame_burst'
-  | 'lightning_shock'
-  | 'rainbow_pulse'
-  | 'void_portal'
-  | 'gold_royale'
-  | 'prism_cyber'
-  | 'venom_toxic'
-  | 'storm_tempest'
-  | 'eclipse_dark'
-  | 'sakura_blossom'
-  | 'cyber_holo';
+export type CosmeticFrameType = string;
+
+export interface FrameStyleConfig {
+  primaryColor: string;
+  secondaryColor: string;
+  accentColor?: string;
+  glowColor: string;
+  borderType?: 'solid' | 'dashed' | 'double' | 'gradient' | 'ornamental' | 'spikes' | 'hearts' | 'stars' | 'wings' | 'runes' | 'cyber' | 'electric' | 'floral' | 'fire_ring' | 'spider_web';
+  ornament?: string;
+  bottomOrnament?: string;
+  animationEffect?: 'pulse' | 'spin' | 'shimmer' | 'bounce' | 'wave' | 'glitch' | 'aurora' | 'flame' | 'rainbow' | 'vortex' | 'electric';
+  customSvg?: string;
+  frameImage?: string;
+  particleType?: 'embers' | 'sparkles' | 'petals' | 'hearts' | 'matrix' | 'lightning' | 'bubbles' | 'none';
+  auraSize?: number;
+}
+
+export interface FramePriceItem {
+  item: string;
+  cost: number;
+}
+
+export interface FramePricing {
+  basePrice: number;
+  complexityCost: number;
+  ornamentCost: number;
+  rarityMultiplier: number;
+  totalCoinPrice: number;
+  priceBreakdown: FramePriceItem[];
+  explanation: string;
+}
 
 export interface Product {
   id: string;
@@ -40,12 +51,23 @@ export interface Product {
   originalPrice?: number;
   isAnimated: boolean;
   frameType?: CosmeticFrameType;
+  frameStyle?: FrameStyleConfig;
+  gender?: 'female' | 'male' | 'unisex';
+  theme?: string;
   previewImage?: string;
   badgeIcon?: string;
   rarity?: 'common' | 'rare' | 'epic' | 'legendary' | 'mythic';
   isPopular?: boolean;
   isNew?: boolean;
   tagText?: string;
+  isAiGenerated?: boolean;
+  createdBy?: string;
+  creatorTag?: string;
+  likesCount?: number;
+  isLiked?: boolean;
+  pricing?: FramePricing;
+  prompt?: string;
+  createdAt?: string;
 }
 
 export interface ScriptItem {
