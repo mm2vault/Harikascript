@@ -55,6 +55,7 @@ import { PremiumModal } from './components/PremiumModal';
 import { ProfileModal } from './components/ProfileModal';
 import { NotificationsModal } from './components/NotificationsModal';
 import { AdminView } from './components/AdminView';
+import { loadSharedCatalog, upsertSharedCatalogItem, deleteSharedCatalogItem } from './lib/catalogSync';
 import { AiFrameStudioModal } from './components/AiFrameStudioModal';
 import { AiFrameStudioView } from './components/AiFrameStudioView';
 import confetti from 'canvas-confetti';
@@ -177,6 +178,27 @@ export default function App() {
   useEffect(() => { localStorage.setItem('harika_admin_deleted_scripts_v1', JSON.stringify(deletedScriptIds)); }, [deletedScriptIds]);
   useEffect(() => { localStorage.setItem('harika_admin_deleted_games_v1', JSON.stringify(deletedGameIds)); }, [deletedGameIds]);
   useEffect(() => { localStorage.setItem('harika_admin_deleted_products_v1', JSON.stringify(deletedProductIds)); }, [deletedProductIds]);
+
+  // Supabase configured ise admin/catalog verisini tüm cihazlar için ortaklaştır.
+  useEffect(() => {
+    let cancelled = false;
+    loadSharedCatalog().then((shared) => {
+      if (!shared || cancelled) return;
+      setCustomScripts(shared.customScripts);
+      setCustomGames(shared.customGames);
+      setCustomProducts(shared.customProducts);
+      setDeletedScriptIds(shared.deletedScriptIds);
+      setDeletedGameIds(shared.deletedGameIds);
+      setDeletedProductIds(shared.deletedProductIds);
+      if (shared.communityFrames.length) {
+        setCommunityFrames((prev) => {
+          const map = new Map([...prev, ...shared.communityFrames].map((f) => [f.id, f]));
+          return [...map.values()];
+        });
+      }
+    }).catch(() => { /* Supabase kurulmadıysa local fallback devam eder. */ });
+    return () => { cancelled = true; };
+  }, []);
 
   const catalogScripts = useMemo(() => [
     ...SCRIPTS_DATA.filter(s => !deletedScriptIds.includes(s.id)),
@@ -351,6 +373,7 @@ export default function App() {
     setCommunityFrames((prev) => {
       const exists = prev.some((f) => f.id === frame.id);
       if (exists) return prev;
+      void upsertSharedCatalogItem('community_frame', frame).catch(() => {});
       return [frame, ...prev];
     });
 
@@ -369,11 +392,9 @@ export default function App() {
       prev.map((f) => {
         if (f.id === id) {
           const isLiked = !f.isLiked;
-          return {
-            ...f,
-            isLiked,
-            likesCount: (f.likesCount || 0) + (isLiked ? 1 : -1)
-          };
+          const next = { ...f, isLiked, likesCount: (f.likesCount || 0) + (isLiked ? 1 : -1) };
+          void upsertSharedCatalogItem('community_frame', next).catch(() => {});
+          return next;
         }
         return f;
       })
