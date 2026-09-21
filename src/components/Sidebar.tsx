@@ -117,7 +117,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   ];
 
   return (
-    <aside className="w-64 shrink-0 flex flex-col justify-between py-6 px-4 min-h-[calc(100vh-5rem)] border-r border-white/[0.06] bg-[#090b10]">
+    <aside className="hidden md:flex w-64 shrink-0 flex flex-col justify-between py-6 px-4 min-h-[calc(100vh-5rem)] border-r border-white/[0.06] bg-[#090b10]">
       {/* Navigation Sections */}
       <div className="space-y-6">
         {navSections.map((section, sIdx) => (
