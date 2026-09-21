@@ -69,6 +69,7 @@ export interface Product {
   pricing?: FramePricing;
   prompt?: string;
   createdAt?: string;
+  createdAt?: string;
 }
 
 export interface ScriptItem {
@@ -94,6 +95,12 @@ export interface ScriptItem {
   rating: number;
   ratingCount: number;
   updatedAt: string;
+  creatorId?: string;
+  creatorName?: string;
+  creatorTag?: string;
+  creatorAvatarUrl?: string;
+  creatorFrameId?: string | null;
+  creatorFrameStyle?: FrameStyleConfig;
 }
 
 export interface GameItem {
