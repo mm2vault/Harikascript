@@ -245,7 +245,7 @@ export default function App() {
   // Toast state
   const [toast, setToast] = useState<ToastMessage | null>({
     id: 'initial-toast',
-    title: 'ScriptDepo & Kozmetikler Entegre Edildi!',
+    title: 'HarikaScript & Kozmetikler Entegre Edildi!',
     description: 'Yeni Discord çerçeveleri ve Roblox scriptleri yüklendi.',
     type: 'success'
   });
@@ -785,7 +785,7 @@ export default function App() {
           {/* 2. GAMES VIEW */}
           {isGamesCategory && (
             <GamesView
-              games={GAMES_DATA}
+              games={catalogGames}
               onSelectGame={handleSelectGame}
             />
           )}
