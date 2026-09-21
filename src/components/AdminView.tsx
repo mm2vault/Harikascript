@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ShieldCheck, Plus, Trash2, Download, RotateCcw, LockKeyhole, FileCode2, Gamepad2, Frame } from 'lucide-react';
 import { GameItem, Product, ScriptItem } from '../types';
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
@@ -52,9 +52,7 @@ export const AdminView: React.FC<AdminViewProps> = (props) => {
     if (error) setAuthMessage(error.message);
   };
 
-  const isAdmin = isSupabaseConfigured
-    ? supabaseRole === 'admin'
-    : loggedIn && email.trim().toLowerCase() === ADMIN_EMAIL;
+  const isAdmin = authEmail?.trim().toLowerCase() === ADMIN_EMAIL || supabaseRole === 'admin' || (!isSupabaseConfigured && loggedIn && email.trim().toLowerCase() === ADMIN_EMAIL);
 
   const exportData = () => {
     const blob = new Blob([JSON.stringify({
