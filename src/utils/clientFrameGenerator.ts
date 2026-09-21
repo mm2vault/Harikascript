@@ -6,7 +6,7 @@ const THEMES: Theme[] = [
   {key:'cyber',name:'Cyber Neon',colors:['#06b6d4','#7c3aed','#f0abfc','#22d3ee'],ornament:'cyber',border:'cyber',animation:'glitch',rarity:'legendary',price:1400},
   {key:'dragon',name:'Ejderha',colors:['#991b1b','#f97316','#fde047','#ef4444'],ornament:'dragon',border:'fire_ring',animation:'flame',rarity:'mythic',price:1800},
   {key:'angel',name:'Melek',colors:['#e0e7ff','#c4b5fd','#fff7ed','#818cf8'],ornament:'wings',border:'wings',animation:'aurora',rarity:'legendary',price:1600},
-  {key:'rose',name:'Gül',colors:['#be123c','#ec4899','#fda4af','#fb7185'],ornament:'rose',border:'floral',animation:'petals' as any,rarity:'epic',price:1100},
+  {key:'rose',name:'Gül',colors:['#be123c','#ec4899','#fda4af','#fb7185'],ornament:'rose',border:'floral',animation:'shimmer',rarity:'epic',price:1100},
   {key:'wolf',name:'Buz Kurdu',colors:['#0ea5e9','#4f46e5','#e0f2fe','#38bdf8'],ornament:'wolf',border:'spikes',animation:'wave',rarity:'epic',price:1200},
   {key:'crown',name:'Kraliyet',colors:['#92400e','#f59e0b','#fef08a','#fbbf24'],ornament:'crown',border:'ornamental',animation:'shimmer',rarity:'legendary',price:1500},
   {key:'hearts',name:'Kalp',colors:['#be185d','#ec4899','#fff','#f472b6'],ornament:'hearts',border:'hearts',animation:'pulse',rarity:'epic',price:1000},
