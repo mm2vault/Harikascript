@@ -1,5 +1,5 @@
-import React, { useMemo, useState } from 'react';
-import { ShieldCheck, Plus, Trash2, Download, Upload, RotateCcw, LockKeyhole, FileCode2, Gamepad2, Frame } from 'lucide-react';
+import React, { useState } from 'react';
+import { ShieldCheck, Plus, Trash2, Download, RotateCcw, LockKeyhole, FileCode2, Gamepad2, Frame } from 'lucide-react';
 import { GameItem, Product, ScriptItem } from '../types';
 
 const ADMIN_EMAIL = 'mm2ultimatehub@gmail.com';
@@ -42,7 +42,7 @@ export const AdminView: React.FC<AdminViewProps> = (props) => {
     if (!form.name.trim()) return;
     if (tab === 'scripts') {
       props.onAddScript({
-        id, name: form.name.trim(), category: form.category || 'custom',
+        id, name: form.name.trim(), category: 'custom',
         gameName: form.gameName || 'Özel Oyun', desc: 'Admin tarafından eklenen script.',
         features: ['Admin tarafından eklendi'], executors: ['Delta','Codex'],
         workingVotes: 0, patchedVotes: 0, code: form.code || '-- Script kodu',
@@ -113,7 +113,25 @@ export const AdminView: React.FC<AdminViewProps> = (props) => {
           {tab==='scripts' && <input value={form.gameName} onChange={e=>setForm({...form,gameName:e.target.value})} placeholder="Oyun adı" className="input-admin"/>}
           {tab==='products' && <input value={form.price} onChange={e=>setForm({...form,price:e.target.value})} placeholder="Coin fiyatı" type="number" className="input-admin"/>}
           {tab==='games' && <input value={form.link} onChange={e=>setForm({...form,link:e.target.value})} placeholder="Roblox oyun linki" className="input-admin"/>}
-          <input value={form.image} onChange={e=>setForm({...form,image:e.target.value})} placeholder="Görsel URL (opsiyonel)" className="input-admin"/>
+          <div className="space-y-2">
+            <input value={form.image} onChange={e=>setForm({...form,image:e.target.value})} placeholder="Görsel URL (opsiyonel)" className="input-admin"/>
+            <label className="flex items-center gap-2 rounded-xl border border-dashed border-indigo-500/30 bg-indigo-500/5 px-3 py-2.5 text-xs text-indigo-200 cursor-pointer hover:bg-indigo-500/10 transition-colors">
+              <span className="font-semibold">Galeriden görsel seç</span>
+              <input
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (!file) return;
+                  const reader = new FileReader();
+                  reader.onload = () => setForm(prev => ({ ...prev, image: String(reader.result || '') }));
+                  reader.readAsDataURL(file);
+                  e.currentTarget.value = '';
+                }}
+              />
+            </label>
+          </div>
           {tab==='scripts' && <textarea value={form.code} onChange={e=>setForm({...form,code:e.target.value})} placeholder="Loadstring / script kodu" className="input-admin md:col-span-2 min-h-28"/>}
         </div>
         <button onClick={add} className="mt-4 px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold flex items-center gap-2"><Plus className="w-4 h-4"/> Ekle</button>
