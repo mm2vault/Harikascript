@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { ShieldCheck, Plus, Trash2, Download, RotateCcw, LockKeyhole, FileCode2, Gamepad2, Frame } from 'lucide-react';
 import { GameItem, Product, ScriptItem } from '../types';
+import { supabase, isSupabaseConfigured } from '../lib/supabase';
+import { upsertSharedCatalogItem, deleteSharedCatalogItem } from '../lib/catalogSync';
 
 const ADMIN_EMAIL = 'mm2ultimatehub@gmail.com';
 
@@ -20,10 +22,39 @@ interface AdminViewProps {
 export const AdminView: React.FC<AdminViewProps> = (props) => {
   const [email, setEmail] = useState('');
   const [loggedIn, setLoggedIn] = useState(false);
+  const [supabaseRole, setSupabaseRole] = useState<string | null>(null);
+  const [authEmail, setAuthEmail] = useState<string | null>(null);
+  const [authMessage, setAuthMessage] = useState('');
   const [tab, setTab] = useState<'scripts' | 'games' | 'products'>('scripts');
   const [form, setForm] = useState({ name:'', gameName:'', category:'custom', code:'', image:'', price:'500', link:'' });
 
-  const isAdmin = loggedIn && email.trim().toLowerCase() === ADMIN_EMAIL;
+  useEffect(() => {
+    if (!isSupabaseConfigured || !supabase) return;
+    let active = true;
+    supabase.auth.getSession().then(async ({ data }) => {
+      const session = data.session;
+      if (!session || !active) return;
+      setAuthEmail(session.user.email || null);
+      const { data: profile } = await supabase.from('profiles').select('role').eq('id', session.user.id).maybeSingle();
+      if (active) setSupabaseRole(profile?.role || null);
+    });
+    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
+      setAuthEmail(session?.user.email || null);
+      if (!session) setSupabaseRole(null);
+    });
+    return () => { active = false; listener.subscription.unsubscribe(); };
+  }, []);
+
+  const loginWithGoogle = async () => {
+    if (!supabase) return;
+    setAuthMessage('Google giriş penceresi açılıyor...');
+    const { error } = await supabase.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: window.location.origin } });
+    if (error) setAuthMessage(error.message);
+  };
+
+  const isAdmin = isSupabaseConfigured
+    ? supabaseRole === 'admin'
+    : loggedIn && email.trim().toLowerCase() === ADMIN_EMAIL;
 
   const exportData = () => {
     const blob = new Blob([JSON.stringify({
@@ -63,6 +94,12 @@ export const AdminView: React.FC<AdminViewProps> = (props) => {
         previewImage: form.image, rarity: 'rare', tagText: 'ADMIN'
       });
     }
+    const created = tab === 'scripts'
+      ? props.scripts.find((x) => x.id === id)
+      : tab === 'games'
+        ? props.games.find((x) => x.id === id)
+        : props.products.find((x) => x.id === id);
+    if (created) void upsertSharedCatalogItem(tab === 'scripts' ? 'script' : tab === 'games' ? 'game' : 'product', created).catch((e) => setAuthMessage(e.message));
     setForm({ name:'', gameName:'', category:'custom', code:'', image:'', price:'500', link:'' });
   };
 
@@ -74,10 +111,20 @@ export const AdminView: React.FC<AdminViewProps> = (props) => {
             <LockKeyhole className="w-6 h-6 text-indigo-300" />
           </div>
           <h2 className="text-2xl font-bold text-white font-heading">Admin Paneli</h2>
-          <p className="text-sm text-slate-400 mt-2">Yönetici hesabıyla giriş yaparak katalog araçlarını aç.</p>
-          <input value={email} onChange={e=>setEmail(e.target.value)} onKeyDown={e=>{if(e.key==='Enter')setLoggedIn(true)}} placeholder="Admin e-posta" className="mt-5 w-full rounded-xl bg-black/30 border border-white/10 px-4 py-3 text-sm text-white outline-none focus:border-indigo-500" />
-          <button onClick={()=>setLoggedIn(true)} className="mt-3 w-full rounded-xl bg-indigo-600 hover:bg-indigo-500 px-4 py-3 text-sm font-bold text-white">Giriş Yap</button>
-          <p className="text-[11px] text-slate-500 mt-3">Admin hesabı: {ADMIN_EMAIL}</p>
+          <p className="text-sm text-slate-400 mt-2">Ortak katalog için güvenli Supabase yöneticisiyle giriş yap.</p>
+          {isSupabaseConfigured ? (
+            <>
+              <button onClick={loginWithGoogle} className="mt-5 w-full rounded-xl bg-white text-slate-900 px-4 py-3 text-sm font-bold hover:bg-slate-100">Google ile Yönetici Girişi</button>
+              <p className="text-[11px] text-slate-500 mt-3">Giriş: {authEmail || 'yapılmadı'} · Rol: {supabaseRole || 'user'}</p>
+            </>
+          ) : (
+            <>
+              <input value={email} onChange={e=>setEmail(e.target.value)} onKeyDown={e=>{if(e.key==='Enter')setLoggedIn(true)}} placeholder="Admin e-posta" className="mt-5 w-full rounded-xl bg-black/30 border border-white/10 px-4 py-3 text-sm text-white outline-none focus:border-indigo-500" />
+              <button onClick={()=>setLoggedIn(true)} className="mt-3 w-full rounded-xl bg-indigo-600 hover:bg-indigo-500 px-4 py-3 text-sm font-bold text-white">Yerel Yönetici Girişi</button>
+              <p className="text-[11px] text-amber-300/70 mt-3">Supabase ayarlanınca bu yerel giriş kaldırılarak gerçek rol kontrolü kullanılır.</p>
+            </>
+          )}
+          {authMessage && <p className="text-[11px] text-rose-300 mt-3">{authMessage}</p>}
         </div>
       </div>
     );
@@ -92,7 +139,7 @@ export const AdminView: React.FC<AdminViewProps> = (props) => {
           <div>
             <div className="flex items-center gap-2 text-emerald-300 text-xs font-bold"><ShieldCheck className="w-4 h-4"/> ADMIN AKTİF</div>
             <h2 className="text-2xl font-bold text-white font-heading mt-1">HarikaScript Yönetim Merkezi</h2>
-            <p className="text-xs text-slate-400 mt-1">Bu panel GitHub Pages üzerinde tarayıcıya özel katalog verisi tutar.</p>
+            <p className="text-xs text-slate-400 mt-1">Supabase bağlıysa değişiklikler tüm cihazlarda ortak katalog olarak saklanır.</p>
           </div>
           <div className="flex gap-2">
             <button onClick={exportData} className="px-3 py-2 rounded-xl bg-white/5 border border-white/10 text-xs text-white flex items-center gap-2"><Download className="w-4 h-4"/> Yedekle</button>
@@ -141,7 +188,11 @@ export const AdminView: React.FC<AdminViewProps> = (props) => {
         {rows.length===0 ? <div className="rounded-2xl border border-white/5 p-8 text-center text-xs text-slate-500">Henüz admin içeriği eklenmedi.</div> : rows.map((row:any)=>(
           <div key={row.id} className="flex items-center justify-between gap-3 rounded-xl border border-white/5 bg-[#0b0e15] px-4 py-3">
             <div className="min-w-0"><div className="text-sm font-semibold text-white truncate">{row.name}</div><div className="text-[11px] text-slate-500 truncate">{row.id}</div></div>
-            <button onClick={()=>tab==='scripts'?props.onDeleteScript(row.id):tab==='games'?props.onDeleteGame(row.id):props.onDeleteProduct(row.id)} className="p-2 rounded-lg bg-rose-500/10 text-rose-300"><Trash2 className="w-4 h-4"/></button>
+            <button onClick={()=>{
+              const type = tab === 'scripts' ? 'script' : tab === 'games' ? 'game' : 'product';
+              tab==='scripts' ? props.onDeleteScript(row.id) : tab==='games' ? props.onDeleteGame(row.id) : props.onDeleteProduct(row.id);
+              void deleteSharedCatalogItem(type, row.id).catch((e) => setAuthMessage(e.message));
+            }} className="p-2 rounded-lg bg-rose-500/10 text-rose-300"><Trash2 className="w-4 h-4"/></button>
           </div>
         ))}
       </div>
