@@ -6,6 +6,8 @@ import './index.css';
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <AppErrorBoundary>\n      <App />\n    </AppErrorBoundary>
+    <AppErrorBoundary>
+      <App />
+    </AppErrorBoundary>
   </StrictMode>,
 );
