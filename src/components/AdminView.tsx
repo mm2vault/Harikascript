@@ -48,7 +48,8 @@ export const AdminView: React.FC<AdminViewProps> = (props) => {
   const loginWithGoogle = async () => {
     if (!supabase) return;
     setAuthMessage('Google giriş penceresi açılıyor...');
-    const { error } = await supabase.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: window.location.origin } });
+    const redirectTo = `${window.location.origin}${window.location.pathname}`;
+    const { error } = await supabase.auth.signInWithOAuth({ provider: 'google', options: { redirectTo } });
     if (error) setAuthMessage(error.message);
   };
 
