@@ -454,6 +454,39 @@ export const GAMES_DATA: GameItem[] = [
     genre: 'Rol Yapma'
   },
   {
+    id: 'petsim',
+    name: 'Pet Simulator 99',
+    link: 'https://www.roblox.com/games/13566893764',
+    image: 'https://i.postimg.cc/28fvW2mz/PS99Icon.webp',
+    desc: 'Devasa evcil hayvanları topla, yumurtaları otomatik aç ve elmas kazan.',
+    developer: 'BIG Games',
+    scriptCount: 9,
+    activePlayers: '200K+',
+    genre: 'Simülasyon / Evcil Hayvan'
+  },
+  {
+    id: 'arsenal',
+    name: 'Arsenal',
+    link: 'https://www.roblox.com/games/286090443',
+    image: 'https://i.postimg.cc/rFhbs0Xg/images.jpg',
+    desc: 'Silah yarışları ve PvP arena aksiyonu. Hızlı tempolu nişancı savaşları.',
+    developer: 'ROLVe Community',
+    scriptCount: 5,
+    activePlayers: '35K+',
+    genre: 'FPS / Aksiyon'
+  },
+  {
+    id: 'kinglegacy',
+    name: 'King Legacy',
+    link: 'https://www.roblox.com/games/4520749081',
+    image: 'https://i.postimg.cc/jScztNGG/no-Filter.jpg',
+    desc: 'Anime dünyasında seviye kasma, deniz canavarları ve meyve güçleri.',
+    developer: 'Venture Lagoons',
+    scriptCount: 5,
+    activePlayers: '30K+',
+    genre: 'RPG / Anime'
+  },
+  {
     id: 'bedwars',
     name: 'BedWars',
     link: 'https://www.roblox.com/games/6872265039',
