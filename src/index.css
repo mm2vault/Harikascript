@@ -257,3 +257,18 @@
     transition-duration: 0.001ms !important;
   }
 }
+
+
+/* Admin form controls */
+.input-admin {
+  width: 100%;
+  border-radius: 0.75rem;
+  background: rgba(0,0,0,.28);
+  border: 1px solid rgba(255,255,255,.10);
+  padding: .75rem 1rem;
+  color: white;
+  font-size: .875rem;
+  outline: none;
+}
+.input-admin:focus { border-color: rgba(99,102,241,.7); box-shadow: 0 0 0 3px rgba(99,102,241,.08); }
+.input-admin::placeholder { color: rgb(100 116 139); }
