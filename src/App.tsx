@@ -58,6 +58,8 @@ import { AdminView } from './components/AdminView';
 import { loadSharedCatalog, upsertSharedCatalogItem, deleteSharedCatalogItem } from './lib/catalogSync';
 import { AiFrameStudioModal } from './components/AiFrameStudioModal';
 import { AiFrameStudioView } from './components/AiFrameStudioView';
+import { AuthModal } from './components/AuthModal';
+import { supabase, isSupabaseConfigured } from './lib/supabase';
 import confetti from 'canvas-confetti';
 
 // Custom Ornamental Frame Icon matching screenshot header
@@ -151,6 +153,67 @@ export default function App() {
       lastDailyClaim: null
     };
   });
+
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [authUserId, setAuthUserId] = useState<string | null>(null);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+
+  useEffect(() => {
+    if (!isSupabaseConfigured || !supabase) return;
+    let alive = true;
+    const applySession = async (session: any) => {
+      if (!alive) return;
+      const authUser = session?.user;
+      setIsAuthenticated(Boolean(authUser));
+      setAuthUserId(authUser?.id || null);
+      if (!authUser) return;
+      const { data: profile } = await supabase.from('profiles').select('*').eq('id', authUser.id).maybeSingle();
+      if (!alive) return;
+      if (profile) {
+        setUser(prev => ({
+          ...prev,
+          name: profile.name || authUser.user_metadata?.name || authUser.email?.split('@')[0] || prev.name,
+          tag: profile.tag || ('#' + authUser.id.slice(0,4).toUpperCase()),
+          avatarUrl: profile.avatar_url || authUser.user_metadata?.avatar_url || prev.avatarUrl,
+          coins: typeof profile.coins === 'number' ? profile.coins : prev.coins,
+          isPremium: Boolean(profile.is_premium),
+          ownedProductIds: Array.isArray(profile.owned_product_ids) ? profile.owned_product_ids : prev.ownedProductIds,
+          unlockedScriptIds: Array.isArray(profile.unlocked_script_ids) ? profile.unlocked_script_ids : prev.unlockedScriptIds,
+          equippedFrameId: profile.equipped_frame_id ?? prev.equippedFrameId,
+          equippedAvatarId: profile.equipped_avatar_id ?? prev.equippedAvatarId,
+          equippedEffectId: profile.equipped_effect_id ?? prev.equippedEffectId,
+          equippedBadgeId: profile.equipped_badge_id ?? prev.equippedBadgeId
+        }));
+      } else {
+        await supabase.from('profiles').upsert({
+          id: authUser.id,
+          name: authUser.user_metadata?.name || authUser.email?.split('@')[0] || 'Kullanıcı',
+          tag: '#' + authUser.id.slice(0,4).toUpperCase(),
+          avatar_url: authUser.user_metadata?.avatar_url || '',
+          coins: 1450,
+          role: 'user'
+        }, { onConflict: 'id' });
+      }
+    };
+    supabase.auth.getSession().then(({data}) => applySession(data.session));
+    const {data: listener} = supabase.auth.onAuthStateChange((_event, session) => { void applySession(session); });
+    return () => { alive = false; listener.subscription.unsubscribe(); };
+  }, []);
+
+  useEffect(() => {
+    if (!authUserId || !supabase) return;
+    const timer = window.setTimeout(() => {
+      void supabase.from('profiles').update({
+        name: user.name, tag: user.tag, avatar_url: user.avatarUrl,
+        coins: user.coins, is_premium: user.isPremium,
+        owned_product_ids: user.ownedProductIds, unlocked_script_ids: user.unlockedScriptIds,
+        equipped_frame_id: user.equippedFrameId, equipped_avatar_id: user.equippedAvatarId,
+        equipped_effect_id: user.equippedEffectId, equipped_badge_id: user.equippedBadgeId,
+        updated_at: new Date().toISOString()
+      }).eq('id', authUserId);
+    }, 400);
+    return () => window.clearTimeout(timer);
+  }, [authUserId, user]);
 
   // Save to localStorage
   useEffect(() => {
@@ -561,6 +624,9 @@ export default function App() {
         onOpenProfile={() => setIsProfileModalOpen(true)}
         onOpenAiStudio={() => setIsAiStudioModalOpen(true)}
         hasUnreadNotifications={hasUnreadNotifications}
+        isAuthenticated={isAuthenticated}
+        onOpenAuth={() => setIsAuthModalOpen(true)}
+        onSignOut={async () => { if (supabase) await supabase.auth.signOut(); setIsAuthenticated(false); setAuthUserId(null); }}
       />
 
       {/* Main Workspace: Sidebar + Content */}
@@ -1007,7 +1073,7 @@ export default function App() {
               scripts={catalogScripts}
               games={catalogGames}
               products={allProducts}
-              onAddScript={(item) => setCustomScripts(prev => [item, ...prev])}
+              onAddScript={(item) => setCustomScripts(prev => [{ ...item, creatorId: authUserId || undefined, creatorName: user.name, creatorTag: user.tag, creatorAvatarUrl: user.avatarUrl, creatorFrameId: user.equippedFrameId, creatorFrameStyle: allProducts.find(p => p.id === user.equippedFrameId)?.frameStyle }, ...prev])}
               onDeleteScript={(id) => id.startsWith('admin-') ? setCustomScripts(prev => prev.filter(x => x.id !== id)) : setDeletedScriptIds(prev => [...new Set([...prev, id])])}
               onAddGame={(item) => setCustomGames(prev => [item, ...prev])}
               onDeleteGame={(id) => id.startsWith('admin-') ? setCustomGames(prev => prev.filter(x => x.id !== id)) : setDeletedGameIds(prev => [...new Set([...prev, id])])}
@@ -1033,6 +1099,8 @@ export default function App() {
           )}
         </main>
       </div>
+
+      <AuthModal isOpen={isAuthModalOpen} onClose={() => setIsAuthModalOpen(false)} />
 
       {/* Script Detail Modal with Syntax Highlighting & Lua Download */}
       <ScriptDetailModal
