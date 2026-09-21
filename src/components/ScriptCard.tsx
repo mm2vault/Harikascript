@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { ScriptItem } from '../types';
 import { FrameRenderer } from './FrameRenderer';
+import { X } from 'lucide-react';
 
 interface ScriptCardProps {
   script: ScriptItem;
@@ -34,6 +35,7 @@ export const ScriptCard: React.FC<ScriptCardProps> = ({
   onUnlockWithCoins
 }) => {
   const [copied, setCopied] = useState(false);
+  const [creatorOpen, setCreatorOpen] = useState(false);
 
   const handleCopy = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -86,20 +88,31 @@ export const ScriptCard: React.FC<ScriptCardProps> = ({
         <p className="text-xs text-slate-400 mt-2 line-clamp-2 leading-relaxed">
           {script.desc}
         </p>
-        <div className="mt-3 flex items-center gap-2">
-          <FrameRenderer
-            frameType={script.creatorFrameId || 'none'}
-            frameStyle={script.creatorFrameStyle}
-            avatarUrl={script.creatorAvatarUrl || ''}
-            size="xs"
-            isAnimated={true}
-          />
+        <button onClick={(e)=>{e.stopPropagation();setCreatorOpen(true)}} className="mt-3 flex items-center gap-2 text-left hover:bg-white/[0.03] rounded-xl p-1 -ml-1 transition-colors">
+          <FrameRenderer frameType={script.creatorFrameId || 'none'} frameStyle={script.creatorFrameStyle} avatarUrl={script.creatorAvatarUrl || ''} size="xs" isAnimated={true}/>
           <div className="min-w-0">
             <div className="text-[10px] text-slate-500">Ekleyen</div>
             <div className="text-xs font-semibold text-slate-200 truncate">{script.creatorName || script.userName}</div>
           </div>
           {script.creatorTag && <span className="text-[9px] text-indigo-300 font-mono">{script.creatorTag}</span>}
-        </div>
+        </button>
+        {creatorOpen && (
+          <div className="fixed inset-0 z-[60] bg-black/75 backdrop-blur-sm flex items-center justify-center p-4" onClick={(e)=>{e.stopPropagation();setCreatorOpen(false)}}>
+            <div className="w-full max-w-sm rounded-3xl bg-[#0d1019] border border-white/10 p-6 shadow-2xl" onClick={e=>e.stopPropagation()}>
+              <div className="flex justify-end"><button onClick={()=>setCreatorOpen(false)} className="w-8 h-8 rounded-full bg-white/5 text-slate-400 hover:text-white flex items-center justify-center"><X className="w-4 h-4"/></button></div>
+              <div className="flex flex-col items-center text-center -mt-3">
+                <FrameRenderer frameType={script.creatorFrameId || 'none'} frameStyle={script.creatorFrameStyle} avatarUrl={script.creatorAvatarUrl || ''} size="lg" isAnimated={true}/>
+                <h3 className="mt-3 text-lg font-bold text-white">{script.creatorName || script.userName}</h3>
+                {script.creatorTag&&<div className="text-xs text-indigo-300 font-mono mt-1">{script.creatorTag}</div>}
+                <div className="mt-4 w-full rounded-2xl bg-white/[0.03] border border-white/5 p-3 text-left">
+                  <div className="text-[10px] text-slate-500 uppercase tracking-wider">Paylaşılan içerik</div>
+                  <div className="text-sm text-white font-semibold mt-1">{script.name}</div>
+                  <div className="text-xs text-slate-400 mt-1">Bu scripti bu profil ekledi.</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Feature Pills */}
         <div className="flex flex-wrap gap-1.5 mt-3.5">
