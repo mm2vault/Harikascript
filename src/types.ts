@@ -8,7 +8,8 @@ export type CategoryType =
   | 'avatars'
   | 'effects'
   | 'badges'
-  | 'inventory';
+  | 'inventory'
+  | 'admin';
 
 export type CosmeticFrameType = string;
 
