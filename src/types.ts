@@ -69,7 +69,6 @@ export interface Product {
   pricing?: FramePricing;
   prompt?: string;
   createdAt?: string;
-  createdAt?: string;
 }
 
 export interface ScriptItem {
