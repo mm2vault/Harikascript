@@ -419,7 +419,7 @@ export default function App() {
     }
 
     return list;
-  }, [activeCategory, searchQuery, sortBy, user.ownedProductIds]);
+  }, [activeCategory, searchQuery, sortBy, user.ownedProductIds, allProducts]);
 
   // Filtered Scripts
   const filteredScripts = useMemo(() => {
