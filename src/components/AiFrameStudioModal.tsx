@@ -23,6 +23,7 @@ import {
 import confetti from 'canvas-confetti';
 import { UserState, Product } from '../types';
 import { FrameRenderer } from './FrameRenderer';
+import { generateClientFrame } from '../utils/clientFrameGenerator';
 
 interface AiFrameStudioModalProps {
   isOpen: boolean;
@@ -105,38 +106,45 @@ export const AiFrameStudioModal: React.FC<AiFrameStudioModalProps> = ({
         setGenerationStep('Hareketli fizik animasyonu ve malzeme dökümü hesaplanıyor...');
       }, 1500);
 
-      const response = await fetch('/api/generate-frame', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          prompt: prompt.trim(),
-          gender: selectedGender,
-          vibe: selectedVibe,
-          requestedBy: user.name
-        })
-      });
+      let frameData: Product | null = null;
+
+      // Sunucu/Gemini varsa onu kullan; GitHub Pages'te /api yoksa
+      // zengin yerel üreticiye otomatik düş.
+      try {
+        const response = await fetch('/api/generate-frame', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            prompt: prompt.trim(),
+            gender: selectedGender,
+            vibe: selectedVibe,
+            requestedBy: user.name
+          })
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          if (data.success && data.frame) {
+            frameData = {
+              ...data.frame,
+              creatorTag: user.tag,
+              isAiGenerated: true,
+              createdAt: 'Az önce'
+            };
+          }
+        }
+      } catch {
+        // GitHub Pages statik olduğu için /api bulunamayabilir.
+      }
+
+      if (!frameData) {
+        frameData = generateClientFrame(prompt.trim(), selectedGender, selectedVibe, user.name);
+        frameData.creatorTag = user.tag;
+      }
 
       clearTimeout(step1Timer);
       clearTimeout(step2Timer);
-
-      if (!response.ok) {
-        throw new Error('Sunucu isteği başarısız oldu.');
-      }
-
-      const data = await response.json();
-      if (data.success && data.frame) {
-        const frameData: Product = {
-          ...data.frame,
-          creatorTag: user.tag,
-          isAiGenerated: true,
-          createdAt: 'Az önce'
-        };
-        setGeneratedFrame(frameData);
-      } else {
-        throw new Error('Çerçeve verisi işlenemedi.');
-      }
+      setGeneratedFrame(frameData);
     } catch (err: any) {
       console.error('Generation failed:', err);
       setErrorMessage('Tasarım yapılırken bir hata oluştu, lütfen tekrar deneyin.');
