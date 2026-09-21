@@ -71,8 +71,9 @@ export const AdminView: React.FC<AdminViewProps> = (props) => {
   const add = () => {
     const id = 'admin-' + Date.now();
     if (!form.name.trim()) return;
+
     if (tab === 'scripts') {
-      props.onAddScript({
+      const item: ScriptItem = {
         id, name: form.name.trim(), category: 'custom',
         gameName: form.gameName || 'Özel Oyun', desc: 'Admin tarafından eklenen script.',
         features: ['Admin tarafından eklendi'], executors: ['Delta','Codex'],
@@ -80,26 +81,27 @@ export const AdminView: React.FC<AdminViewProps> = (props) => {
         isPremium: false, isKeyless: true, coinPrice: 0, image: form.image,
         downloads: 0, views: 0, status: 'active', version: '1.0',
         userName: 'HarikaScript Admin', rating: 5, ratingCount: 0, updatedAt: new Date().toISOString()
-      });
+      };
+      props.onAddScript(item);
+      void upsertSharedCatalogItem('script', item).catch((e) => setAuthMessage(e.message));
     } else if (tab === 'games') {
-      props.onAddGame({
+      const item: GameItem = {
         id, name: form.name.trim(), link: form.link || '#', image: form.image,
         desc: 'Admin tarafından eklenen Roblox oyunu.', developer: 'HarikaScript',
         scriptCount: 0, activePlayers: '—', genre: form.category || 'Roblox'
-      });
+      };
+      props.onAddGame(item);
+      void upsertSharedCatalogItem('game', item).catch((e) => setAuthMessage(e.message));
     } else {
-      props.onAddProduct({
+      const item: Product = {
         id, name: form.name.trim(), category: 'frames', description: 'Admin tarafından eklenen kozmetik.',
         price: Math.max(0, Number(form.price) || 0), isAnimated: false,
         previewImage: form.image, rarity: 'rare', tagText: 'ADMIN'
-      });
+      };
+      props.onAddProduct(item);
+      void upsertSharedCatalogItem('product', item).catch((e) => setAuthMessage(e.message));
     }
-    const created = tab === 'scripts'
-      ? props.scripts.find((x) => x.id === id)
-      : tab === 'games'
-        ? props.games.find((x) => x.id === id)
-        : props.products.find((x) => x.id === id);
-    if (created) void upsertSharedCatalogItem(tab === 'scripts' ? 'script' : tab === 'games' ? 'game' : 'product', created).catch((e) => setAuthMessage(e.message));
+
     setForm({ name:'', gameName:'', category:'custom', code:'', image:'', price:'500', link:'' });
   };
 
