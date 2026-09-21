@@ -54,6 +54,7 @@ import { PurchaseModal } from './components/PurchaseModal';
 import { PremiumModal } from './components/PremiumModal';
 import { ProfileModal } from './components/ProfileModal';
 import { NotificationsModal } from './components/NotificationsModal';
+import { AdminView } from './components/AdminView';
 import { AiFrameStudioModal } from './components/AiFrameStudioModal';
 import { AiFrameStudioView } from './components/AiFrameStudioView';
 import confetti from 'canvas-confetti';
@@ -117,6 +118,10 @@ export default function App() {
     'ai-studio': {
       title: 'AI Özel Çerçeve Atölyesi',
       subtitle: 'Hayalindeki çerçeveyi tarif et, AI çizsin ve yapılış zorluğuna göre fiyatını çıkarsın!'
+    },
+    admin: {
+      title: 'Admin Yönetim Merkezi',
+      subtitle: 'Script, oyun ve kozmetik kataloğunu yönet.'
     }
   };
 
@@ -154,6 +159,33 @@ export default function App() {
       // ignore
     }
   }, [user]);
+
+  // Admin-local catalog overlays (GitHub Pages-safe persistence)
+  const loadAdmin = <T,>(key: string, fallback: T): T => {
+    try { const raw = localStorage.getItem(key); return raw ? JSON.parse(raw) : fallback; } catch { return fallback; }
+  };
+  const [customScripts, setCustomScripts] = useState<ScriptItem[]>(() => loadAdmin('harika_admin_scripts_v1', []));
+  const [customGames, setCustomGames] = useState<GameItem[]>(() => loadAdmin('harika_admin_games_v1', []));
+  const [customProducts, setCustomProducts] = useState<Product[]>(() => loadAdmin('harika_admin_products_v1', []));
+  const [deletedScriptIds, setDeletedScriptIds] = useState<string[]>(() => loadAdmin('harika_admin_deleted_scripts_v1', []));
+  const [deletedGameIds, setDeletedGameIds] = useState<string[]>(() => loadAdmin('harika_admin_deleted_games_v1', []));
+  const [deletedProductIds, setDeletedProductIds] = useState<string[]>(() => loadAdmin('harika_admin_deleted_products_v1', []));
+
+  useEffect(() => { localStorage.setItem('harika_admin_scripts_v1', JSON.stringify(customScripts)); }, [customScripts]);
+  useEffect(() => { localStorage.setItem('harika_admin_games_v1', JSON.stringify(customGames)); }, [customGames]);
+  useEffect(() => { localStorage.setItem('harika_admin_products_v1', JSON.stringify(customProducts)); }, [customProducts]);
+  useEffect(() => { localStorage.setItem('harika_admin_deleted_scripts_v1', JSON.stringify(deletedScriptIds)); }, [deletedScriptIds]);
+  useEffect(() => { localStorage.setItem('harika_admin_deleted_games_v1', JSON.stringify(deletedGameIds)); }, [deletedGameIds]);
+  useEffect(() => { localStorage.setItem('harika_admin_deleted_products_v1', JSON.stringify(deletedProductIds)); }, [deletedProductIds]);
+
+  const catalogScripts = useMemo(() => [
+    ...SCRIPTS_DATA.filter(s => !deletedScriptIds.includes(s.id)),
+    ...customScripts
+  ], [customScripts, deletedScriptIds]);
+  const catalogGames = useMemo(() => [
+    ...GAMES_DATA.filter(g => !deletedGameIds.includes(g.id)),
+    ...customGames
+  ], [customGames, deletedGameIds]);
 
   // AI Community Frames State (Dynamic Showcase)
   const [communityFrames, setCommunityFrames] = useState<Product[]>(() => {
@@ -290,10 +322,12 @@ export default function App() {
 
   // Combine base products with AI Community generated frames
   const allProducts = useMemo(() => {
-    const existingIds = new Set(INITIAL_PRODUCTS.map((p) => p.id));
-    const extraCommunity = communityFrames.filter((cf) => !existingIds.has(cf.id));
-    return [...extraCommunity, ...INITIAL_PRODUCTS];
-  }, [communityFrames]);
+    const existingIds = new Set([...INITIAL_PRODUCTS, ...customProducts].map((p) => p.id));
+    const base = INITIAL_PRODUCTS.filter(p => !deletedProductIds.includes(p.id));
+    const custom = customProducts.filter(p => !deletedProductIds.includes(p.id));
+    const extraCommunity = communityFrames.filter((cf) => !existingIds.has(cf.id) && !deletedProductIds.includes(cf.id));
+    return [...extraCommunity, ...custom, ...base];
+  }, [communityFrames, customProducts, deletedProductIds]);
 
   // Buy & Equip AI generated custom frame
   const handleBuyAndEquipAiFrame = (frame: Product) => {
@@ -389,7 +423,7 @@ export default function App() {
 
   // Filtered Scripts
   const filteredScripts = useMemo(() => {
-    let list = SCRIPTS_DATA;
+    let list = catalogScripts;
 
     if (activeCategory === 'inventory') {
       list = list.filter((s) => user.unlockedScriptIds.includes(s.id));
@@ -411,7 +445,7 @@ export default function App() {
     }
 
     return list;
-  }, [activeCategory, scriptGameFilter, searchQuery, user.unlockedScriptIds]);
+  }, [activeCategory, scriptGameFilter, searchQuery, user.unlockedScriptIds, catalogScripts]);
 
   // Buy cosmetic
   const handleConfirmPurchase = (product: Product) => {
@@ -488,6 +522,7 @@ export default function App() {
   const isExecutorsCategory = activeCategory === 'executors';
   const isInventoryCategory = activeCategory === 'inventory';
   const isAiStudioCategory = activeCategory === 'ai-studio';
+  const isAdminCategory = activeCategory === 'admin';
 
   return (
     <div className="min-h-screen bg-[#070810] text-slate-100 flex flex-col selection:bg-indigo-500 selection:text-white font-sans">
@@ -522,6 +557,14 @@ export default function App() {
 
         {/* Content Canvas */}
         <main className="flex-1 p-5 sm:p-8 overflow-y-auto">
+          <div className="md:hidden mb-4 flex gap-2 overflow-x-auto pb-1">
+            {(['scripts','games','frames','inventory','admin'] as CategoryType[]).map(cat => (
+              <button key={cat} onClick={() => setActiveCategory(cat)} className={`whitespace-nowrap px-3 py-2 rounded-xl text-[11px] font-bold border ${activeCategory===cat?'bg-indigo-600 border-indigo-500 text-white':'bg-white/5 border-white/10 text-slate-400'}`}>
+                {cat==='scripts'?'📜 Scripts':cat==='games'?'🎮 Oyunlar':cat==='frames'?'✨ Kozmetik':cat==='inventory'?'🎒 Envanter':'🛡️ Admin'}
+              </button>
+            ))}
+          </div>
+
           {/* Daily Tasks Banner */}
           <DailyTasksWidget
             tasks={tasks}
@@ -935,6 +978,26 @@ export default function App() {
                 </div>
               </div>
             </div>
+          )}
+
+          {/* 7. ADMIN VIEW */}
+          {isAdminCategory && (
+            <AdminView
+              scripts={catalogScripts}
+              games={catalogGames}
+              products={allProducts}
+              onAddScript={(item) => setCustomScripts(prev => [item, ...prev])}
+              onDeleteScript={(id) => id.startsWith('admin-') ? setCustomScripts(prev => prev.filter(x => x.id !== id)) : setDeletedScriptIds(prev => [...new Set([...prev, id])])}
+              onAddGame={(item) => setCustomGames(prev => [item, ...prev])}
+              onDeleteGame={(id) => id.startsWith('admin-') ? setCustomGames(prev => prev.filter(x => x.id !== id)) : setDeletedGameIds(prev => [...new Set([...prev, id])])}
+              onAddProduct={(item) => setCustomProducts(prev => [item, ...prev])}
+              onDeleteProduct={(id) => id.startsWith('admin-') ? setCustomProducts(prev => prev.filter(x => x.id !== id)) : setDeletedProductIds(prev => [...new Set([...prev, id])])}
+              onReset={() => {
+                setCustomScripts([]); setCustomGames([]); setCustomProducts([]);
+                setDeletedScriptIds([]); setDeletedGameIds([]); setDeletedProductIds([]);
+                showToast('Admin verileri sıfırlandı', 'Yerel katalog varsayılan haline döndü.', 'info');
+              }}
+            />
           )}
 
           {/* 6. AI FRAME STUDIO VIEW */}
