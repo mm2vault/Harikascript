@@ -42,12 +42,25 @@ drop policy if exists "catalog public read" on public.catalog_items;
 create policy "catalog public read" on public.catalog_items for select using (true);
 
 drop policy if exists "catalog admin write" on public.catalog_items;
+create or replace function public.is_admin()
+returns boolean
+language sql
+security definer
+set search_path = public
+stable
+as $
+  select exists (select 1 from public.profiles where id = auth.uid() and role = 'admin');
+$;
+
+revoke all on function public.is_admin() from public;
+grant execute on function public.is_admin() to authenticated;
+
 create policy "catalog admin write" on public.catalog_items for all to authenticated
-using (exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'admin'))
-with check (exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'admin'));
+using (public.is_admin())
+with check (public.is_admin());
 
 drop policy if exists "profile own read" on public.profiles;
-create policy "profile own read" on public.profiles for select to authenticated using (id = auth.uid() or exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'admin'));
+create policy "profile own read" on public.profiles for select to authenticated using (id = auth.uid() or public.is_admin());
 
 drop policy if exists "profile own update" on public.profiles;
 create policy "profile own update" on public.profiles for update to authenticated using (id = auth.uid()) with check (id = auth.uid());
