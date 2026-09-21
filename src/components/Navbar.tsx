@@ -10,6 +10,9 @@ interface NavbarProps {
   onOpenProfile: () => void;
   onOpenAiStudio?: () => void;
   hasUnreadNotifications?: boolean;
+  isAuthenticated?: boolean;
+  onOpenAuth?: () => void;
+  onSignOut?: () => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -18,7 +21,10 @@ export const Navbar: React.FC<NavbarProps> = ({
   onOpenNotifications,
   onOpenProfile,
   onOpenAiStudio,
-  hasUnreadNotifications = true
+  hasUnreadNotifications = true,
+  isAuthenticated = false,
+  onOpenAuth,
+  onSignOut
 }) => {
   // Format coin balance with dot separator like in the screenshot (e.g. 1.250)
   const formatCoins = (amount: number) => {
@@ -97,7 +103,18 @@ export const Navbar: React.FC<NavbarProps> = ({
           )}
         </button>
 
-        {/* Profile Avatar Button with Live Equipped Frame */}
+          {!isAuthenticated && onOpenAuth && (
+          <button onClick={onOpenAuth} className="hidden sm:flex items-center gap-2 px-3 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold">
+            Giriş Yap
+          </button>
+        )}
+        {isAuthenticated && onSignOut && (
+          <button onClick={onSignOut} className="hidden sm:block text-[10px] text-slate-500 hover:text-white">
+            Çıkış
+          </button>
+        )}
+
+      {/* Profile Avatar Button with Live Equipped Frame */}
         <button
           id="btn-profile"
           onClick={onOpenProfile}
