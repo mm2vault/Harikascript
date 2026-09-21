@@ -14,6 +14,7 @@ import {
   Lock
 } from 'lucide-react';
 import { ScriptItem } from '../types';
+import { FrameRenderer } from './FrameRenderer';
 
 interface ScriptCardProps {
   script: ScriptItem;
@@ -85,6 +86,20 @@ export const ScriptCard: React.FC<ScriptCardProps> = ({
         <p className="text-xs text-slate-400 mt-2 line-clamp-2 leading-relaxed">
           {script.desc}
         </p>
+        <div className="mt-3 flex items-center gap-2">
+          <FrameRenderer
+            frameType={script.creatorFrameId || 'none'}
+            frameStyle={script.creatorFrameStyle}
+            avatarUrl={script.creatorAvatarUrl || ''}
+            size="xs"
+            isAnimated={true}
+          />
+          <div className="min-w-0">
+            <div className="text-[10px] text-slate-500">Ekleyen</div>
+            <div className="text-xs font-semibold text-slate-200 truncate">{script.creatorName || script.userName}</div>
+          </div>
+          {script.creatorTag && <span className="text-[9px] text-indigo-300 font-mono">{script.creatorTag}</span>}
+        </div>
 
         {/* Feature Pills */}
         <div className="flex flex-wrap gap-1.5 mt-3.5">
