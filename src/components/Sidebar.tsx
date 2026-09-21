@@ -10,7 +10,8 @@ import {
   MoreHorizontal,
   ChevronRight,
   ShieldCheck,
-  Package
+  Package,
+  ShieldCheck
 } from 'lucide-react';
 import { CategoryType } from '../types';
 
@@ -104,6 +105,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
           id: 'inventory',
           label: 'Envanterim',
           icon: <Package className="w-4 h-4" />
+        },
+        {
+          id: 'admin',
+          label: 'Admin Paneli',
+          icon: <ShieldCheck className="w-4 h-4 text-emerald-400" />,
+          badge: 'ADMIN'
         }
       ]
     }
