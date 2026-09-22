@@ -29,7 +29,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
   return (
     <div
       id={`card-${product.id}`}
-      className="group relative rounded-2xl bg-[#0b0e16]/95 border border-white/[0.08] hover:border-indigo-500/40 p-4 sm:p-4 flex flex-col justify-between transition-all duration-300 shadow-xl hover:shadow-[0_12px_40px_rgba(0,0,0,0.6)]"
+      className="group relative rounded-2xl bg-[#0b0e16]/95 border border-white/[0.08] hover:border-indigo-500/40 p-3.5 sm:p-4 flex flex-col justify-between transition-all duration-300 shadow-xl hover:shadow-[0_12px_40px_rgba(0,0,0,0.6)]"
     >
       {/* Top Bar inside card: Animated Badge or Rarity */}
       <div className="flex items-center justify-between z-10 w-full mb-1">
@@ -67,7 +67,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
       </div>
 
       {/* Center Visual: Frame or Avatar Preview with Interactive Hover Try-On */}
-      <div className="relative my-4 flex items-center justify-center min-h-[165px]">
+      <div className="relative my-3 flex items-center justify-center min-h-[185px]">
         {product.category === 'frames' || product.frameType || product.frameStyle ? (
           <FrameRenderer
             frameType={product.frameType || product.id}
@@ -114,10 +114,10 @@ export const ProductCard: React.FC<ProductCardProps> = ({
 
       {/* Price Section */}
       <div className="mt-3 flex items-center gap-2">
-        <div className="w-6 h-6 rounded-full bg-gradient-to-tr from-amber-600 via-amber-400 to-yellow-200 flex items-center justify-center shadow-[0_0_8px_rgba(245,158,11,0.5)]">
+        <div className="w-5.5 h-5.5 rounded-full bg-gradient-to-tr from-amber-600 via-amber-400 to-yellow-200 flex items-center justify-center shadow-[0_0_8px_rgba(245,158,11,0.5)]">
           <span className="text-[11px] font-black text-amber-950 leading-none">★</span>
         </div>
-        <span className="text-lg font-bold text-white tracking-tight font-heading">
+        <span className="text-base font-bold text-white tracking-tight font-heading">
           {product.price.toLocaleString('tr-TR')}
         </span>
       </div>
@@ -136,7 +136,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
           <button
             id={`btn-equip-${product.id}`}
             onClick={() => onEquip(product)}
-            className="w-full py-3 px-4 rounded-2xl bg-[#1e2746] hover:bg-[#28355f] border border-indigo-400/40 text-white font-semibold text-sm flex items-center justify-center gap-2 transition-all active:scale-[0.98] shadow-md"
+            className="w-full py-2.5 px-4 rounded-xl bg-[#1e2746] hover:bg-[#28355f] border border-indigo-400/40 text-white font-semibold text-sm flex items-center justify-center gap-2 transition-all active:scale-[0.98] shadow-md"
           >
             <Check className="w-4 h-4 text-indigo-300 stroke-[2]" />
             <span>Kuşan</span>
