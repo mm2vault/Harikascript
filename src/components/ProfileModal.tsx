@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { UserState, Product } from '../types';
 import { FrameRenderer } from './FrameRenderer';
+import { uploadUserImage } from '../lib/storage';
 
 interface ProfileModalProps {
   isOpen: boolean;
@@ -76,16 +77,16 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
     'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=300&auto=format&fit=crop&q=80'
   ];
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        if (event.target?.result) {
-          onUpdateAvatar(event.target.result as string);
-        }
-      };
-      reader.readAsDataURL(file);
+    if (!file) return;
+    try {
+      const url = await uploadUserImage(file, 'avatars');
+      onUpdateAvatar(url);
+    } catch {
+      // Upload errors are surfaced by the parent toast/session flow.
+    } finally {
+      e.currentTarget.value = '';
     }
   };
 
