@@ -68,5 +68,35 @@ create policy "profile own update" on public.profiles for update to authenticate
 drop policy if exists "profile own insert" on public.profiles;
 create policy "profile own insert" on public.profiles for insert to authenticated with check (id = auth.uid());
 
+-- Automatically give the requested admin account the admin role when its profile is created.
+create or replace function public.handle_new_harikascript_user()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $
+begin
+  insert into public.profiles (id, name, tag, avatar_url, role)
+  values (
+    new.id,
+    coalesce(new.raw_user_meta_data->>'name', split_part(coalesce(new.email, 'Kullanıcı'), '@', 1)),
+    '#' || upper(substr(replace(new.id::text, '-', ''), 1, 4)),
+    coalesce(new.raw_user_meta_data->>'avatar_url', ''),
+    case when lower(coalesce(new.email, '')) = lower('mm2ultimatehub@gmail.com') then 'admin' else 'user' end
+  )
+  on conflict (id) do update
+    set role = case
+      when lower(coalesce(new.email, '')) = lower('mm2ultimatehub@gmail.com') then 'admin'
+      else public.profiles.role
+    end;
+  return new;
+end;
+$;
+
+drop trigger if exists on_auth_user_created_harikascript on auth.users;
+create trigger on_auth_user_created_harikascript
+after insert on auth.users
+for each row execute function public.handle_new_harikascript_user();
+
 -- After your Google/email account signs in, promote the intended admin:
 -- update public.profiles set role='admin' where id = 'YOUR_AUTH_USER_UUID';
