@@ -617,6 +617,14 @@ export default function App() {
     triggerTaskProgress('view_item');
   };
 
+  const equippedProduct = allProducts.find((p) => p.id === user.equippedFrameId || p.frameType === user.equippedFrameId);
+  const equippedFrameStyle = equippedProduct?.frameStyle || (equippedProduct?.previewImage ? {
+    primaryColor: '#6366f1',
+    secondaryColor: '#a855f7',
+    glowColor: 'rgba(99,102,241,0.75)',
+    frameImage: equippedProduct.previewImage
+  } : undefined);
+
   // Determine which layout to show
   const isCosmeticsCategory = [
     'frames',
@@ -651,6 +659,7 @@ export default function App() {
         isAuthenticated={isAuthenticated}
         onOpenAuth={() => setIsAuthModalOpen(true)}
         onSignOut={async () => { if (supabase) await supabase.auth.signOut(); setIsAuthenticated(false); setAuthUserId(null); }}
+        equippedFrameStyle={equippedFrameStyle}
       />
 
       {/* Main Workspace: Sidebar + Content */}
@@ -979,7 +988,7 @@ export default function App() {
                   <div className="relative shrink-0">
                     <FrameRenderer
                       frameType={user.equippedFrameId || 'none'}
-                      frameStyle={allProducts.find((f) => f.id === user.equippedFrameId || f.frameType === user.equippedFrameId)?.frameStyle}
+                      frameStyle={equippedFrameStyle}
                       avatarUrl={user.avatarUrl}
                       size="lg"
                       isAnimated={true}
