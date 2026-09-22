@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { ShieldCheck, Plus, Trash2, Download, RotateCcw, LockKeyhole, FileCode2, Gamepad2, Frame } from 'lucide-react';
 import { GameItem, Product, ScriptItem } from '../types';
-import { supabase, isSupabaseConfigured } from '../lib/supabase';
+import { firebaseAuth } from '../lib/firebase';
+import { onAuthStateChanged } from 'firebase/auth';
 import { upsertSharedCatalogItem, deleteSharedCatalogItem } from '../lib/catalogSync';
 
 interface AdminViewProps {
@@ -22,7 +23,7 @@ interface AdminViewProps {
 }
 
 export const AdminView: React.FC<AdminViewProps> = (props) => {
-  const [supabaseRole, setSupabaseRole] = useState<string | null>(null);
+  const [authReady, setAuthReady] = useState(false);
   const [authEmail, setAuthEmail] = useState<string | null>(null);
   const [authMessage, setAuthMessage] = useState('');
   const [tab, setTab] = useState<'scripts' | 'games' | 'products'>('scripts');
@@ -31,23 +32,14 @@ export const AdminView: React.FC<AdminViewProps> = (props) => {
   const [editingId, setEditingId] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!isSupabaseConfigured || !supabase) return;
-    let active = true;
-    supabase.auth.getSession().then(async ({ data }) => {
-      const session = data.session;
-      if (!session || !active) return;
-      setAuthEmail(session.user.email || null);
-      const { data: profile } = await supabase.from('profiles').select('role').eq('id', session.user.id).maybeSingle();
-      if (active) setSupabaseRole(profile?.role || null);
+    const unsubscribe = onAuthStateChanged(firebaseAuth, (user) => {
+      setAuthEmail(user?.email || null);
+      setAuthReady(true);
     });
-    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
-      setAuthEmail(session?.user.email || null);
-      if (!session) setSupabaseRole(null);
-    });
-    return () => { active = false; listener.subscription.unsubscribe(); };
+    return () => unsubscribe();
   }, []);
 
-  const isAdmin = supabaseRole === 'admin' || authEmail?.toLowerCase() === 'mm2ultimatehub@gmail.com';
+  const isAdmin = authReady && authEmail?.toLowerCase() === 'mm2ultimatehub@gmail.com';
 
   const exportData = () => {
     const blob = new Blob([JSON.stringify({
@@ -110,11 +102,11 @@ export const AdminView: React.FC<AdminViewProps> = (props) => {
             <LockKeyhole className="w-6 h-6 text-indigo-300" />
           </div>
           <h2 className="text-2xl font-bold text-white font-heading">Admin Paneli</h2>
-          <p className="text-sm text-slate-400 mt-2">Ortak katalog için güvenli Supabase yöneticisiyle giriş yap.</p>
+          <p className="text-sm text-slate-400 mt-2">Ortak katalog için Firebase hesabınla giriş yap.</p>
           <>
             <button onClick={props.onOpenAuth} className="mt-5 w-full rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-3 text-sm font-bold">Giriş Yap / Hesap Oluştur</button>
-            <p className="text-[11px] text-slate-500 mt-3">Admin yetkisi yalnızca doğrulanmış Supabase hesabından kontrol edilir.</p>
-            <p className="text-[11px] text-slate-500 mt-1">Mevcut oturum: {authEmail || 'yok'} · Rol: {supabaseRole || 'user'}</p>
+            <p className="text-[11px] text-slate-500 mt-3">Admin yetkisi Firebase hesabındaki e-posta ile kontrol edilir.</p>
+            <p className="text-[11px] text-slate-500 mt-1">Mevcut oturum: {authEmail || 'yok'}</p>
           </>
           {authMessage && <p className="text-[11px] text-rose-300 mt-3">{authMessage}</p>}
         </div>
@@ -131,7 +123,7 @@ export const AdminView: React.FC<AdminViewProps> = (props) => {
           <div>
             <div className="flex items-center gap-2 text-emerald-300 text-xs font-bold"><ShieldCheck className="w-4 h-4"/> ADMIN AKTİF</div>
             <h2 className="text-2xl font-bold text-white font-heading mt-1">HarikaScript Yönetim Merkezi</h2>
-            <p className="text-xs text-slate-400 mt-1">Supabase bağlıysa değişiklikler tüm cihazlarda ortak katalog olarak saklanır.</p>
+            <p className="text-xs text-slate-400 mt-1">Firebase bağlıysa değişiklikler tüm cihazlarda ortak katalog olarak saklanır.</p>
           </div>
           <div className="flex gap-2">
             <button onClick={exportData} className="px-3 py-2 rounded-xl bg-white/5 border border-white/10 text-xs text-white flex items-center gap-2"><Download className="w-4 h-4"/> Yedekle</button>
