@@ -20,7 +20,7 @@ const inp='w-full rounded-xl bg-[#090c14] border border-white/10 px-3 py-2.5 tex
 const lab='text-[10px] uppercase tracking-wider font-bold text-slate-500';
 
 export const AdminView:React.FC<AdminViewProps>=p=>{
- const [ready,setReady]=useState(false),[email,setEmail]=useState<string|null>(null),[msg,setMsg]=useState(''),[tab,setTab]=useState<Tab>('scripts'),[form,setForm]=useState<Form>(empty),[editId,setEditId]=useState<string|null>(null),[original,setOriginal]=useState<any>(null),[users,setUsers]=useState<any[]>([]),[loadingUsers,setLoadingUsers]=useState(false),[githubToken,setGithubToken]=useState('');
+ const [ready,setReady]=useState(false),[email,setEmail]=useState<string|null>(null),[msg,setMsg]=useState(''),[tab,setTab]=useState<Tab>('scripts'),[form,setForm]=useState<Form>(empty),[editId,setEditId]=useState<string|null>(null),[original,setOriginal]=useState<any>(null),[users,setUsers]=useState<any[]>([]),[loadingUsers,setLoadingUsers]=useState(false);
  useEffect(()=>onAuthStateChanged(firebaseAuth,u=>{setEmail(u?.email||null);setReady(true)}),[]);
  const admin=ready&&email?.toLowerCase()==='mm2ultimatehub@gmail.com';
  const rows=useMemo(()=>tab==='scripts'?p.scripts:tab==='games'?p.games:tab==='products'?p.products:[],[tab,p.scripts,p.games,p.products]);
@@ -30,9 +30,8 @@ export const AdminView:React.FC<AdminViewProps>=p=>{
  const edit=(x:any)=>{setEditId(x.id);setOriginal(x);setForm({...empty,name:x.name||'',gameName:x.gameName||'',category:x.category||'custom',code:x.code||'',image:x.image||x.previewImage||'',price:String(x.price??500),link:x.link||'',description:x.desc||x.description||'',developer:x.developer||'HarikaScript',genre:x.genre||'Roblox',version:x.version||'1.0',coinPrice:String(x.coinPrice??0),rarity:x.rarity||'rare',tagText:x.tagText||'ADMIN',status:x.status||'active',isPremium:!!x.isPremium,isKeyless:x.isKeyless!==false,isAnimated:!!x.isAnimated,removeBlackCenter:x.frameStyle?.removeBlackCenter!==false});window.scrollTo({top:0,behavior:'smooth'})};
  const upload=async(f:File)=>{
   try{
-    if(!githubToken.trim()) throw new Error('Önce GitHub yükleme anahtarını gir.');
     setMsg('GitHub\'a yükleniyor...');
-    const url=await uploadAdminFile(f,githubToken,'cosmetics');
+    const url=await uploadAdminFile(f,'cosmetics');
     setForm(v=>({...v,image:url}));
     setMsg('GitHub\'a yüklendi ✓');
   }catch(e:any){setMsg(e?.message||'Görsel yüklenemedi.')}
@@ -51,10 +50,9 @@ export const AdminView:React.FC<AdminViewProps>=p=>{
   <div className="rounded-3xl border border-emerald-500/20 bg-gradient-to-r from-[#0c1514] to-[#10111b] p-6 flex flex-wrap items-center justify-between gap-3"><div><div className="text-emerald-300 text-xs font-bold flex items-center gap-2"><ShieldCheck className="w-4 h-4"/> ADMIN AKTİF</div><h2 className="text-2xl font-bold text-white mt-1">HarikaScript Yönetim Merkezi</h2><p className="text-xs text-slate-400 mt-1">Tüm katalog içeriklerini düzenle/sil/ekle ve kullanıcı coinlerini yönet.</p></div><div className="flex gap-2"><button onClick={backup} className="px-3 py-2 rounded-xl bg-white/5 border border-white/10 text-xs text-white flex gap-2"><Download className="w-4 h-4"/>Tam Yedek</button><button onClick={p.onReset} className="px-3 py-2 rounded-xl bg-rose-500/10 text-rose-300 text-xs flex gap-2"><RotateCcw className="w-4 h-4"/>Sıfırla</button></div></div>
   <div className="flex gap-2 overflow-x-auto">{([['scripts','Scriptler',FileCode2],['games','Oyunlar',Gamepad2],['products','Kozmetikler',Frame],['users','Kullanıcılar',Users]] as const).map(([id,l,I])=><button key={id} onClick={()=>setTab(id)} className={`px-4 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2 whitespace-nowrap ${tab===id?'bg-indigo-600 text-white':'bg-white/5 text-slate-400'}`}><I className="w-4 h-4"/>{l}</button>)}</div>
   {tab!=='users'?<><div className="rounded-2xl border border-white/10 bg-[#0c0f17] p-5">
-  <div className="mb-4 rounded-2xl border border-amber-500/20 bg-amber-500/5 p-3">
-    <div className="text-[11px] font-bold text-amber-300">GitHub görsel yükleme</div>
-    <p className="text-[10px] text-slate-400 mt-1">Admin için geçici kullanım: token tarayıcıda tutulmaz ve Firestore'a kaydedilmez.</p>
-    <input className={inp+" mt-2"} type="password" autoComplete="off" value={githubToken} onChange={e=>setGithubToken(e.target.value)} placeholder="GitHub fine-grained token (Contents: Read and write)" />
+  <div className="mb-4 rounded-2xl border border-emerald-500/20 bg-emerald-500/5 p-3">
+    <div className="text-[11px] font-bold text-emerald-300">GitHub görsel deposu hazır</div>
+    <p className="text-[10px] text-slate-400 mt-1">Görseller güvenli sunucu üzerinden GitHub'a yüklenir. Token bu panelde istenmez.</p>
   </div>
   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
    <div><div className={lab}>Ad</div><input className={inp} value={form.name} onChange={e=>setForm({...form,name:e.target.value})}/></div>
