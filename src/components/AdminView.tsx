@@ -1,190 +1,58 @@
-import React, { useState, useEffect } from 'react';
-import { ShieldCheck, Plus, Trash2, Download, RotateCcw, LockKeyhole, FileCode2, Gamepad2, Frame } from 'lucide-react';
+import React, { useEffect, useMemo, useState } from 'react';
+import { ShieldCheck, Plus, Trash2, Download, RotateCcw, LockKeyhole, FileCode2, Gamepad2, Frame, Users, Pencil, Coins, Save, X, ImagePlus } from 'lucide-react';
+import { collection, getDocs, doc, updateDoc } from 'firebase/firestore';
 import { GameItem, Product, ScriptItem } from '../types';
-import { firebaseAuth } from '../lib/firebase';
+import { firebaseAuth, firebaseDb } from '../lib/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
 import { upsertSharedCatalogItem, deleteSharedCatalogItem } from '../lib/catalogSync';
 import { uploadUserImage } from '../lib/storage';
 
 interface AdminViewProps {
-  scripts: ScriptItem[];
-  games: GameItem[];
-  products: Product[];
-  onAddScript: (script: ScriptItem) => void;
-  onDeleteScript: (id: string) => void;
-  onAddGame: (game: GameItem) => void;
-  onDeleteGame: (id: string) => void;
-  onAddProduct: (product: Product) => void;
-  onDeleteProduct: (id: string) => void;
-  onEditScript: (item: ScriptItem) => void;
-  onEditGame: (item: GameItem) => void;
-  onEditProduct: (item: Product) => void;
-  onReset: () => void;
-  onOpenAuth?: () => void;
+  scripts: ScriptItem[]; games: GameItem[]; products: Product[];
+  onAddScript:(x:ScriptItem)=>void; onDeleteScript:(id:string)=>void; onAddGame:(x:GameItem)=>void; onDeleteGame:(id:string)=>void;
+  onAddProduct:(x:Product)=>void; onDeleteProduct:(id:string)=>void; onEditScript:(x:ScriptItem)=>void; onEditGame:(x:GameItem)=>void; onEditProduct:(x:Product)=>void;
+  onReset:()=>void; onOpenAuth?:()=>void;
 }
+type Tab='scripts'|'games'|'products'|'users';
+type Form={name:string;gameName:string;category:string;code:string;image:string;price:string;link:string;description:string;developer:string;genre:string;version:string;coinPrice:string;rarity:Product['rarity'];tagText:string;status:ScriptItem['status'];isPremium:boolean;isKeyless:boolean;isAnimated:boolean;removeBlackCenter:boolean};
+const empty:Form={name:'',gameName:'',category:'custom',code:'',image:'',price:'500',link:'',description:'',developer:'HarikaScript',genre:'Roblox',version:'1.0',coinPrice:'0',rarity:'rare',tagText:'ADMIN',status:'active',isPremium:false,isKeyless:true,isAnimated:false,removeBlackCenter:true};
+const inp='w-full rounded-xl bg-[#090c14] border border-white/10 px-3 py-2.5 text-xs text-white outline-none focus:border-indigo-500 placeholder:text-slate-600';
+const lab='text-[10px] uppercase tracking-wider font-bold text-slate-500';
 
-export const AdminView: React.FC<AdminViewProps> = (props) => {
-  const [authReady, setAuthReady] = useState(false);
-  const [authEmail, setAuthEmail] = useState<string | null>(null);
-  const [authMessage, setAuthMessage] = useState('');
-  const [tab, setTab] = useState<'scripts' | 'games' | 'products'>('scripts');
-  const emptyForm = { name:'', gameName:'', category:'custom', code:'', image:'', price:'500', link:'', removeBlackCenter: true };
-  const [form, setForm] = useState(emptyForm);
-  const [editingId, setEditingId] = useState<string | null>(null);
-
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(firebaseAuth, (user) => {
-      setAuthEmail(user?.email || null);
-      setAuthReady(true);
-    });
-    return () => unsubscribe();
-  }, []);
-
-  const isAdmin = authReady && authEmail?.toLowerCase() === 'mm2ultimatehub@gmail.com';
-
-  const exportData = () => {
-    const blob = new Blob([JSON.stringify({
-      scripts: props.scripts.filter(s => s.id.startsWith('admin-')),
-      games: props.games.filter(g => g.id.startsWith('admin-')),
-      products: props.products.filter(p => p.id.startsWith('admin-'))
-    }, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url; a.download = 'harikascript-admin-backup.json'; a.click();
-    URL.revokeObjectURL(url);
-  };
-
-  const add = () => {
-    const id = editingId || ('admin-' + Date.now());
-    if (!form.name.trim()) return;
-
-    if (tab === 'scripts') {
-      const item: ScriptItem = {
-        id, name: form.name.trim(), category: 'custom',
-        gameName: form.gameName || 'Özel Oyun', desc: 'Admin tarafından eklenen script.',
-        features: ['Admin tarafından eklendi'], executors: ['Delta','Codex'],
-        workingVotes: 0, patchedVotes: 0, code: form.code || '-- Script kodu',
-        isPremium: false, isKeyless: true, coinPrice: 0, image: form.image,
-        downloads: 0, views: 0, status: 'active', version: '1.0',
-        userName: 'HarikaScript Admin', rating: 5, ratingCount: 0, updatedAt: new Date().toISOString()
-      };
-      editingId ? props.onEditScript(item) : props.onAddScript(item);
-      void upsertSharedCatalogItem('script', item).catch((e) => setAuthMessage(e.message));
-    } else if (tab === 'games') {
-      const item: GameItem = {
-        id, name: form.name.trim(), link: form.link || '#', image: form.image,
-        desc: 'Admin tarafından eklenen Roblox oyunu.', developer: 'HarikaScript',
-        scriptCount: 0, activePlayers: '—', genre: form.category || 'Roblox'
-      };
-      editingId ? props.onEditGame(item) : props.onAddGame(item);
-      void upsertSharedCatalogItem('game', item).catch((e) => setAuthMessage(e.message));
-    } else {
-      const item: Product = {
-        id, name: form.name.trim(), category: 'frames', description: 'Admin tarafından eklenen kozmetik.',
-        price: Math.max(0, Number(form.price) || 0), isAnimated: false,
-        previewImage: form.image, rarity: 'rare', tagText: 'ADMIN',
-        frameStyle: form.image ? {
-          primaryColor: '#a78bfa', secondaryColor: '#7c3aed', accentColor: '#f5f3ff', glowColor: '#8b5cf6',
-          frameImage: form.image, removeBlackCenter: form.removeBlackCenter
-        } : undefined
-      };
-      editingId ? props.onEditProduct(item) : props.onAddProduct(item);
-      void upsertSharedCatalogItem('product', item).catch((e) => setAuthMessage(e.message));
-    }
-
-    setForm(emptyForm); setEditingId(null);
-  };
-
-  if (!isAdmin) {
-    return (
-      <div className="max-w-xl mx-auto py-10">
-        <div className="rounded-3xl border border-indigo-500/20 bg-[#0c0f18] p-7 shadow-2xl">
-          <div className="w-14 h-14 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center mb-5">
-            <LockKeyhole className="w-6 h-6 text-indigo-300" />
-          </div>
-          <h2 className="text-2xl font-bold text-white font-heading">Admin Paneli</h2>
-          <p className="text-sm text-slate-400 mt-2">Ortak katalog için Firebase hesabınla giriş yap.</p>
-          <>
-            <button onClick={props.onOpenAuth} className="mt-5 w-full rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-3 text-sm font-bold">Giriş Yap / Hesap Oluştur</button>
-            <p className="text-[11px] text-slate-500 mt-3">Admin yetkisi Firebase hesabındaki e-posta ile kontrol edilir.</p>
-            <p className="text-[11px] text-slate-500 mt-1">Mevcut oturum: {authEmail || 'yok'}</p>
-          </>
-          {authMessage && <p className="text-[11px] text-rose-300 mt-3">{authMessage}</p>}
-        </div>
-      </div>
-    );
-  }
-
-  const rows = tab === 'scripts' ? props.scripts.filter(x=>x.id.startsWith('admin-')) : tab === 'games' ? props.games.filter(x=>x.id.startsWith('admin-')) : props.products.filter(x=>x.id.startsWith('admin-'));
-
-  return (
-    <div className="space-y-6">
-      <div className="rounded-3xl border border-emerald-500/20 bg-gradient-to-r from-[#0c1514] to-[#10111b] p-6">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <div className="flex items-center gap-2 text-emerald-300 text-xs font-bold"><ShieldCheck className="w-4 h-4"/> ADMIN AKTİF</div>
-            <h2 className="text-2xl font-bold text-white font-heading mt-1">HarikaScript Yönetim Merkezi</h2>
-            <p className="text-xs text-slate-400 mt-1">Firebase bağlıysa değişiklikler tüm cihazlarda ortak katalog olarak saklanır.</p>
-          </div>
-          <div className="flex gap-2">
-            <button onClick={exportData} className="px-3 py-2 rounded-xl bg-white/5 border border-white/10 text-xs text-white flex items-center gap-2"><Download className="w-4 h-4"/> Yedekle</button>
-            <button onClick={props.onReset} className="px-3 py-2 rounded-xl bg-rose-500/10 border border-rose-500/20 text-xs text-rose-300 flex items-center gap-2"><RotateCcw className="w-4 h-4"/> Sıfırla</button>
-          </div>
-        </div>
-      </div>
-
-      <div className="flex gap-2 overflow-x-auto">
-        {([['scripts','Scripts',FileCode2],['games','Oyunlar',Gamepad2],['products','Kozmetikler',Frame]] as const).map(([id,label,Icon])=>(
-          <button key={id} onClick={()=>setTab(id)} className={`px-4 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2 whitespace-nowrap ${tab===id?'bg-indigo-600 text-white':'bg-white/5 text-slate-400'}`}><Icon className="w-4 h-4"/>{label}</button>
-        ))}
-      </div>
-
-      <div className="rounded-2xl border border-white/10 bg-[#0c0f17] p-5">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          <input value={form.name} onChange={e=>setForm({...form,name:e.target.value})} placeholder={tab==='scripts'?'Script adı':tab==='games'?'Oyun adı':'Kozmetik adı'} className="input-admin"/>
-          {tab==='scripts' && <input value={form.gameName} onChange={e=>setForm({...form,gameName:e.target.value})} placeholder="Oyun adı" className="input-admin"/>}
-          {tab==='products' && <input value={form.price} onChange={e=>setForm({...form,price:e.target.value})} placeholder="Coin fiyatı" type="number" className="input-admin"/>}
-          {tab==='games' && <input value={form.link} onChange={e=>setForm({...form,link:e.target.value})} placeholder="Roblox oyun linki" className="input-admin"/>}
-          <div className="space-y-2">
-            <input value={form.image} onChange={e=>setForm({...form,image:e.target.value})} placeholder="Görsel URL (opsiyonel)" className="input-admin"/>
-            <label className="flex items-center gap-2 rounded-xl border border-dashed border-indigo-500/30 bg-indigo-500/5 px-3 py-2.5 text-xs text-indigo-200 cursor-pointer hover:bg-indigo-500/10 transition-colors">
-              <span className="font-semibold">Galeriden görsel seç</span>
-              <input
-                type="file"
-                accept="image/*"
-                className="hidden"
-                onChange={async (e) => {
-                  const file = e.target.files?.[0];
-                  if (!file) return;
-                  try {
-                    const url = await uploadUserImage(file, 'cosmetics');
-                    setForm(prev => ({ ...prev, image: url }));
-                  } catch (err: any) {
-                    setAuthMessage(err?.message || 'Görsel yüklenemedi.');
-                  } finally {
-                    e.currentTarget.value = '';
-                  }
-                }}
-              />
-            </label>
-          </div>
-          {tab==='scripts' && <textarea value={form.code} onChange={e=>setForm({...form,code:e.target.value})} placeholder="Loadstring / script kodu" className="input-admin md:col-span-2 min-h-28"/>}
-        </div>
-        <button onClick={add} className="mt-4 px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold flex items-center gap-2"><Plus className="w-4 h-4"/>{editingId ? "Kaydet" : "Ekle"}</button>{editingId && <button onClick={()=>{setEditingId(null);setForm(emptyForm)}} className="mt-4 ml-2 px-4 py-2.5 rounded-xl bg-white/5 border border-white/10 text-slate-300 text-xs font-bold">İptal</button>}
-      </div>
-
-      <div className="space-y-2">
-        {rows.length===0 ? <div className="rounded-2xl border border-white/5 p-8 text-center text-xs text-slate-500">Henüz admin içeriği eklenmedi.</div> : rows.map((row:any)=>(
-          <div key={row.id} className="flex items-center justify-between gap-3 rounded-xl border border-white/5 bg-[#0b0e15] px-4 py-3">
-            <div className="min-w-0"><div className="text-sm font-semibold text-white truncate">{row.name}</div><div className="text-[11px] text-slate-500 truncate">{row.id}</div></div>
-            <button onClick={()=>{
-              const type = tab === 'scripts' ? 'script' : tab === 'games' ? 'game' : 'product';
-              tab==='scripts' ? props.onDeleteScript(row.id) : tab==='games' ? props.onDeleteGame(row.id) : props.onDeleteProduct(row.id);
-              void deleteSharedCatalogItem(type, row.id).catch((e) => setAuthMessage(e.message));
-            }} className="p-2 rounded-lg bg-rose-500/10 text-rose-300"><Trash2 className="w-4 h-4"/></button>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-};
+export const AdminView:React.FC<AdminViewProps>=p=>{
+ const [ready,setReady]=useState(false),[email,setEmail]=useState<string|null>(null),[msg,setMsg]=useState(''),[tab,setTab]=useState<Tab>('scripts'),[form,setForm]=useState<Form>(empty),[editId,setEditId]=useState<string|null>(null),[original,setOriginal]=useState<any>(null),[users,setUsers]=useState<any[]>([]),[loadingUsers,setLoadingUsers]=useState(false);
+ useEffect(()=>onAuthStateChanged(firebaseAuth,u=>{setEmail(u?.email||null);setReady(true)}),[]);
+ const admin=ready&&email?.toLowerCase()==='mm2ultimatehub@gmail.com';
+ const rows=useMemo(()=>tab==='scripts'?p.scripts:tab==='games'?p.games:tab==='products'?p.products:[],[tab,p.scripts,p.games,p.products]);
+ const loadUsers=async()=>{if(!admin)return;setLoadingUsers(true);try{const s=await getDocs(collection(firebaseDb,'users'));setUsers(s.docs.map(d=>({id:d.id,...d.data()})))}catch(e:any){setMsg(e?.message||'Kullanıcılar yüklenemedi.')}finally{setLoadingUsers(false)}};
+ useEffect(()=>{if(tab==='users')void loadUsers()},[tab,admin]);
+ const reset=()=>{setForm(empty);setEditId(null);setOriginal(null)};
+ const edit=(x:any)=>{setEditId(x.id);setOriginal(x);setForm({...empty,name:x.name||'',gameName:x.gameName||'',category:x.category||'custom',code:x.code||'',image:x.image||x.previewImage||'',price:String(x.price??500),link:x.link||'',description:x.desc||x.description||'',developer:x.developer||'HarikaScript',genre:x.genre||'Roblox',version:x.version||'1.0',coinPrice:String(x.coinPrice??0),rarity:x.rarity||'rare',tagText:x.tagText||'ADMIN',status:x.status||'active',isPremium:!!x.isPremium,isKeyless:x.isKeyless!==false,isAnimated:!!x.isAnimated,removeBlackCenter:x.frameStyle?.removeBlackCenter!==false});window.scrollTo({top:0,behavior:'smooth'})};
+ const upload=async(f:File)=>{try{setForm(v=>({...v,image:await uploadUserImage(f,'cosmetics')}));setMsg('Görsel yüklendi ✓')}catch(e:any){setMsg(e?.message||'Görsel yüklenemedi.')}};
+ const save=async()=>{if(!form.name.trim())return;const id=editId||'admin-'+Date.now();try{
+  if(tab==='scripts'){const x:ScriptItem={...(original||{}),id,name:form.name.trim(),category:form.category||original?.category||'custom',gameName:form.gameName||original?.gameName||'Özel Oyun',desc:form.description||original?.desc||'',code:form.code||original?.code||'',image:form.image||original?.image||'',version:form.version||original?.version||'1.0',coinPrice:Number(form.coinPrice)||0,isPremium:form.isPremium,isKeyless:form.isKeyless,status:form.status,updatedAt:new Date().toISOString()};editId?p.onEditScript(x):p.onAddScript(x);await upsertSharedCatalogItem('script',x)}
+  else if(tab==='games'){const x:GameItem={...(original||{}),id,name:form.name.trim(),link:form.link||original?.link||'#',image:form.image||original?.image||'',desc:form.description||original?.desc||'',developer:form.developer||original?.developer||'HarikaScript',genre:form.genre||original?.genre||'Roblox',scriptCount:original?.scriptCount||0,activePlayers:original?.activePlayers||'—'};editId?p.onEditGame(x):p.onAddGame(x);await upsertSharedCatalogItem('game',x)}
+  else {const s=original?.frameStyle||{};const x:Product={...(original||{}),id,name:form.name.trim(),category:original?.category||'frames',description:form.description||original?.description||'',price:Number(form.price)||0,previewImage:form.image||original?.previewImage||'',rarity:form.rarity,tagText:form.tagText,isAnimated:form.isAnimated,frameStyle:form.image?{...s,primaryColor:s.primaryColor||'#a78bfa',secondaryColor:s.secondaryColor||'#7c3aed',accentColor:s.accentColor||'#f5f3ff',glowColor:s.glowColor||'#8b5cf6',frameImage:form.image,removeBlackCenter:form.removeBlackCenter}:original?.frameStyle};editId?p.onEditProduct(x):p.onAddProduct(x);await upsertSharedCatalogItem('product',x)}
+  reset();setMsg('Kaydedildi ✓')
+ }catch(e:any){setMsg(e?.message||'Kaydetme başarısız.')}}
+ const remove=async(x:any)=>{if(!confirm('Bu içeriği siteden kaldırmak istiyor musun?'))return;const type=tab==='scripts'?'script':tab==='games'?'game':'product';try{type==='script'?p.onDeleteScript(x.id):type==='game'?p.onDeleteGame(x.id):p.onDeleteProduct(x.id);await deleteSharedCatalogItem(type,x.id);if(editId===x.id)reset()}catch(e:any){setMsg(e?.message||'Silme başarısız.')}};
+ const backup=()=>{const b=new Blob([JSON.stringify({scripts:p.scripts,games:p.games,products:p.products,exportedAt:new Date().toISOString()},null,2)],{type:'application/json'}),u=URL.createObjectURL(b),a=document.createElement('a');a.href=u;a.download='harikascript-full-backup.json';a.click();URL.revokeObjectURL(u)};
+ const coins=async(uid:string,v:number)=>{try{await updateDoc(doc(firebaseDb,'users',uid),{coins:Math.max(0,v)});setUsers(a=>a.map(x=>x.id===uid?{...x,coins:Math.max(0,v)}:x))}catch(e:any){setMsg(e?.message||'Coin güncellenemedi.')}};
+ if(!admin)return <div className="max-w-xl mx-auto py-10"><div className="rounded-3xl border border-indigo-500/20 bg-[#0c0f18] p-7"><LockKeyhole className="w-7 h-7 text-indigo-300 mb-5"/><h2 className="text-2xl font-bold text-white">Admin Paneli</h2><p className="text-sm text-slate-400 mt-2">Firebase admin hesabıyla giriş yap.</p><button onClick={p.onOpenAuth} className="mt-5 w-full rounded-xl bg-indigo-600 text-white px-4 py-3 text-sm font-bold">Giriş Yap</button><p className="text-[11px] text-slate-500 mt-3">Yetkili hesap: mm2ultimatehub@gmail.com · Oturum: {email||'yok'}</p></div></div>;
+ return <div className="space-y-5">
+  <div className="rounded-3xl border border-emerald-500/20 bg-gradient-to-r from-[#0c1514] to-[#10111b] p-6 flex flex-wrap items-center justify-between gap-3"><div><div className="text-emerald-300 text-xs font-bold flex items-center gap-2"><ShieldCheck className="w-4 h-4"/> ADMIN AKTİF</div><h2 className="text-2xl font-bold text-white mt-1">HarikaScript Yönetim Merkezi</h2><p className="text-xs text-slate-400 mt-1">Tüm katalog içeriklerini düzenle/sil/ekle ve kullanıcı coinlerini yönet.</p></div><div className="flex gap-2"><button onClick={backup} className="px-3 py-2 rounded-xl bg-white/5 border border-white/10 text-xs text-white flex gap-2"><Download className="w-4 h-4"/>Tam Yedek</button><button onClick={p.onReset} className="px-3 py-2 rounded-xl bg-rose-500/10 text-rose-300 text-xs flex gap-2"><RotateCcw className="w-4 h-4"/>Sıfırla</button></div></div>
+  <div className="flex gap-2 overflow-x-auto">{([['scripts','Scriptler',FileCode2],['games','Oyunlar',Gamepad2],['products','Kozmetikler',Frame],['users','Kullanıcılar',Users]] as const).map(([id,l,I])=><button key={id} onClick={()=>setTab(id)} className={`px-4 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2 whitespace-nowrap ${tab===id?'bg-indigo-600 text-white':'bg-white/5 text-slate-400'}`}><I className="w-4 h-4"/>{l}</button>)}</div>
+  {tab!=='users'?<><div className="rounded-2xl border border-white/10 bg-[#0c0f17] p-5"><div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+   <div><div className={lab}>Ad</div><input className={inp} value={form.name} onChange={e=>setForm({...form,name:e.target.value})}/></div>
+   {tab==='scripts'&&<><div><div className={lab}>Oyun</div><input className={inp} value={form.gameName} onChange={e=>setForm({...form,gameName:e.target.value})}/></div><div><div className={lab}>Kategori</div><input className={inp} value={form.category} onChange={e=>setForm({...form,category:e.target.value})}/></div><div><div className={lab}>Coin</div><input className={inp} type="number" value={form.coinPrice} onChange={e=>setForm({...form,coinPrice:e.target.value})}/></div><div><div className={lab}>Versiyon</div><input className={inp} value={form.version} onChange={e=>setForm({...form,version:e.target.value})}/></div></>}
+   {tab==='games'&&<><div><div className={lab}>Roblox Link</div><input className={inp} value={form.link} onChange={e=>setForm({...form,link:e.target.value})}/></div><div><div className={lab}>Geliştirici</div><input className={inp} value={form.developer} onChange={e=>setForm({...form,developer:e.target.value})}/></div><div><div className={lab}>Tür</div><input className={inp} value={form.genre} onChange={e=>setForm({...form,genre:e.target.value})}/></div></>}
+   {tab==='products'&&<><div><div className={lab}>Coin fiyatı</div><input className={inp} type="number" value={form.price} onChange={e=>setForm({...form,price:e.target.value})}/></div><div><div className={lab}>Nadirlik</div><select className={inp} value={form.rarity} onChange={e=>setForm({...form,rarity:e.target.value as Product['rarity']})}><option value="common">Common</option><option value="rare">Rare</option><option value="epic">Epic</option><option value="legendary">Legendary</option><option value="mythic">Mythic</option></select></div><div><div className={lab}>Etiket</div><input className={inp} value={form.tagText} onChange={e=>setForm({...form,tagText:e.target.value})}/></div><div className="flex items-center gap-4 pt-5 text-xs text-slate-300"><label><input type="checkbox" checked={form.isAnimated} onChange={e=>setForm({...form,isAnimated:e.target.checked})}/> Animasyonlu</label><label><input type="checkbox" checked={form.removeBlackCenter} onChange={e=>setForm({...form,removeBlackCenter:e.target.checked})}/> Siyah merkezi kaldır</label></div></>}
+   <div className="md:col-span-2"><div className={lab}>Açıklama</div><textarea className={`${inp} min-h-20`} value={form.description} onChange={e=>setForm({...form,description:e.target.value})}/></div>
+   <div><div className={lab}>Görsel URL</div><input className={inp} value={form.image} onChange={e=>setForm({...form,image:e.target.value})} placeholder="https://..."/></div>
+   <label className="rounded-xl border border-dashed border-indigo-500/30 bg-indigo-500/5 px-3 py-2.5 text-xs text-indigo-200 cursor-pointer flex items-center gap-2"><ImagePlus className="w-4 h-4"/>Galeriden / GIF seç<input type="file" accept="image/*,.gif" className="hidden" onChange={e=>{const f=e.target.files?.[0];if(f)void upload(f);e.currentTarget.value=''}}/></label>
+   {tab==='scripts'&&<textarea className={`${inp} md:col-span-2 min-h-32 font-mono`} value={form.code} onChange={e=>setForm({...form,code:e.target.value})} placeholder="Loadstring / script kodu"/>}
+  </div><div className="flex gap-2 mt-4"><button onClick={()=>void save()} className="px-4 py-2.5 rounded-xl bg-indigo-600 text-white text-xs font-bold flex gap-2"><Save className="w-4 h-4"/>{editId?'Değişiklikleri Kaydet':'Yeni Ekle'}</button>{editId&&<button onClick={reset} className="px-4 py-2.5 rounded-xl bg-white/5 text-slate-300 text-xs font-bold flex gap-2"><X className="w-4 h-4"/>İptal</button>}</div>{msg&&<div className="mt-3 text-[11px] text-indigo-200">{msg}</div>}</div>
+   <div className="space-y-2"><div className="text-[11px] text-slate-500">Toplam {rows.length} içerik — temel içerikler de düzenlenebilir.</div>{rows.map((x:any)=><div key={x.id} className="flex items-center gap-3 rounded-xl border border-white/5 bg-[#0b0e15] px-4 py-3">{(x.image||x.previewImage)&&<img src={x.image||x.previewImage} className="w-10 h-10 rounded-lg object-cover bg-black/30"/>}<div className="flex-1 min-w-0"><div className="text-sm font-semibold text-white truncate">{x.name}</div><div className="text-[11px] text-slate-500 truncate">{x.id}</div></div><button onClick={()=>edit(x)} className="p-2 rounded-lg bg-indigo-500/10 text-indigo-300"><Pencil className="w-4 h-4"/></button><button onClick={()=>void remove(x)} className="p-2 rounded-lg bg-rose-500/10 text-rose-300"><Trash2 className="w-4 h-4"/></button></div>)}</div>
+  </>:<div className="space-y-3"><div className="flex justify-between items-center"><h3 className="text-sm font-bold text-white">Kullanıcı Coin Yönetimi</h3><button onClick={()=>void loadUsers()} className="text-xs text-indigo-300">Yenile</button></div>{loadingUsers?<div className="text-xs text-slate-500 text-center py-8">Yükleniyor...</div>:users.map(u=><div key={u.id} className="rounded-2xl border border-white/5 bg-[#0b0e15] p-4 flex flex-wrap items-center gap-3"><div className="flex-1 min-w-[180px]"><div className="text-sm font-semibold text-white">{u.name||'Kullanıcı'}</div><div className="text-[10px] text-slate-500">{u.id}</div></div><div className="flex items-center gap-2"><Coins className="w-4 h-4 text-amber-400"/><input id={`coin-${u.id}`} defaultValue={String(u.coins??0)} type="number" className="w-28 rounded-lg bg-black/30 border border-white/10 px-2 py-2 text-xs text-white"/></div><button onClick={()=>{const e=document.getElementById(`coin-${u.id}`) as HTMLInputElement|null;void coins(u.id,Number(e?.value||0))}} className="px-3 py-2 rounded-lg bg-amber-500/10 text-amber-300 text-xs font-bold">Coin Güncelle</button></div>)}</div>}
+ </div>
+}
