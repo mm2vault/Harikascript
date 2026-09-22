@@ -32,31 +32,31 @@ export const Navbar: React.FC<NavbarProps> = ({
   };
 
   return (
-    <header className="w-full h-20 border-b border-white/[0.07] bg-[#090b10]/95 backdrop-blur-md px-4 sm:px-8 flex items-center justify-between sticky top-0 z-40">
+    <header className="w-full h-[72px] border-b border-white/[0.07] bg-[#090b10]/95 backdrop-blur-md px-4 sm:px-6 lg:px-8 flex items-center justify-between sticky top-0 z-40">
       {/* Left: Brand / Market Header */}
-      <div className="flex items-center gap-3.5">
-        <div className="w-11 h-11 rounded-xl bg-[#131622] border border-white/10 flex items-center justify-center text-white shadow-inner">
+      <div className="flex items-center gap-3">
+        <div className="w-10 h-10 rounded-xl bg-[#131622] border border-white/10 flex items-center justify-center text-white shadow-inner">
           <ShoppingBag className="w-5 h-5 text-slate-200 stroke-[1.8]" />
         </div>
         <div>
           <div className="flex items-center gap-2">
-            <h1 className="text-xl font-bold text-white tracking-tight font-heading">Market</h1>
+            <h1 className="text-lg sm:text-xl font-bold text-white tracking-tight font-heading">Market</h1>
             {user.isPremium && (
               <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-gradient-to-r from-amber-500/20 to-purple-500/20 text-amber-300 border border-amber-500/30">
                 VIP
               </span>
             )}
           </div>
-          <p className="text-xs text-slate-400 font-medium">Coinlerinle özel ürünler satın al!</p>
+          <p className="text-[11px] sm:text-xs text-slate-400 font-medium">Coinlerinle özel ürünler satın al!</p>
         </div>
       </div>
 
       {/* Right Controls: Coin Counter, Notifications, Avatar */}
-      <div className="flex items-center gap-3 sm:gap-4">
+      <div className="flex items-center gap-2 sm:gap-3">
         {/* Coin Balance Pill */}
-        <div className="flex items-center bg-[#131622] border border-white/10 rounded-full pl-3 pr-1.5 py-1.5 gap-2.5 shadow-sm hover:border-amber-500/40 transition-colors">
+        <div className="flex items-center bg-[#131622] border border-white/10 rounded-full pl-2.5 pr-1 py-1 gap-2 shadow-sm hover:border-amber-500/40 transition-colors">
           {/* Gold Coin Icon */}
-          <div className="w-6 h-6 rounded-full bg-gradient-to-tr from-amber-600 via-amber-400 to-yellow-200 flex items-center justify-center shadow-[0_0_8px_rgba(245,158,11,0.5)]">
+          <div className="w-5.5 h-5.5 rounded-full bg-gradient-to-tr from-amber-600 via-amber-400 to-yellow-200 flex items-center justify-center shadow-[0_0_8px_rgba(245,158,11,0.5)]">
             <span className="text-[11px] font-black text-amber-950 leading-none">★</span>
           </div>
 
@@ -94,7 +94,7 @@ export const Navbar: React.FC<NavbarProps> = ({
         <button
           id="btn-notifications"
           onClick={onOpenNotifications}
-          className="relative w-10 h-10 rounded-full bg-[#131622] border border-white/10 hover:border-white/20 text-slate-300 hover:text-white flex items-center justify-center transition-colors"
+          className="relative w-9 h-9 rounded-full bg-[#131622] border border-white/10 hover:border-white/20 text-slate-300 hover:text-white flex items-center justify-center transition-colors"
           title="Bildirimler"
         >
           <Bell className="w-4 h-4" />
