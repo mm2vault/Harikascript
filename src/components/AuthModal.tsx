@@ -24,7 +24,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({isOpen,onClose}) => {
     if(!supabase){setMessage('Supabase bağlantısı yok.');return;}
     setBusy(true); setMessage('Google girişine yönlendiriliyorsun...');
     try{
-      const redirectTo = `${window.location.origin}${import.meta.env.BASE_URL || '/Harikascript/'}`;
+      const redirectTo = 'https://mm2vault.github.io/Harikascript/';
       const {error}=await supabase.auth.signInWithOAuth({
         provider:'google',
         options:{redirectTo}
