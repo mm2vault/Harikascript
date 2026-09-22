@@ -280,3 +280,8 @@
 @media (max-width: 767px) {
   .market-glow::before { display:none; }
 }
+
+
+/* Horizontal mobile navigation without a visible scrollbar */
+.scrollbar-hide { scrollbar-width: none; -ms-overflow-style: none; }
+.scrollbar-hide::-webkit-scrollbar { display: none; }
