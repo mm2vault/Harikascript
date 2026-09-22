@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { ShieldCheck, Plus, Trash2, Download, RotateCcw, LockKeyhole, FileCode2, Gamepad2, Frame } from 'lucide-react';
 import { GameItem, Product, ScriptItem } from '../types';
-import { supabase } from '../lib/supabase';
+import { supabase, isSupabaseConfigured } from '../lib/supabase';
 import { upsertSharedCatalogItem, deleteSharedCatalogItem } from '../lib/catalogSync';
 
 interface AdminViewProps {
@@ -42,7 +42,7 @@ export const AdminView: React.FC<AdminViewProps> = (props) => {
     return () => { active = false; listener.subscription.unsubscribe(); };
   }, []);
 
-  const isAdmin = authEmail?.trim().toLowerCase() === ADMIN_EMAIL || supabaseRole === 'admin';
+  const isAdmin = supabaseRole === 'admin';
 
   const exportData = () => {
     const blob = new Blob([JSON.stringify({
