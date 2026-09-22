@@ -8,7 +8,8 @@ import {
   Crown,
   ChevronRight,
   ShieldCheck,
-  Package
+  Package,
+  ShoppingBag
 } from 'lucide-react';
 import { CategoryType } from '../types';
 
