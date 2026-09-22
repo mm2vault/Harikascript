@@ -272,3 +272,11 @@
 }
 .input-admin:focus { border-color: rgba(99,102,241,.7); box-shadow: 0 0 0 3px rgba(99,102,241,.08); }
 .input-admin::placeholder { color: rgb(100 116 139); }
+
+
+/* Market screenshot polish */
+.market-glow { position: relative; }
+.market-glow::before { content: ''; position: absolute; inset: -20%; background: radial-gradient(circle at 50% 45%, rgba(99,102,241,.10), transparent 55%); pointer-events:none; }
+@media (max-width: 767px) {
+  .market-glow::before { display:none; }
+}
