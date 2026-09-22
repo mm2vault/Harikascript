@@ -16,7 +16,7 @@ import {
 } from 'lucide-react';
 import { UserState, Product } from '../types';
 import { FrameRenderer } from './FrameRenderer';
-import { uploadUserImage } from '../lib/storage';
+import { compressAvatarToDataUrl } from '../lib/githubUpload';
 
 interface ProfileModalProps {
   isOpen: boolean;
@@ -81,7 +81,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
     const file = e.target.files?.[0];
     if (!file) return;
     try {
-      const url = await uploadUserImage(file, 'avatars');
+      const url = await compressAvatarToDataUrl(file);
       onUpdateAvatar(url);
     } catch {
       // Upload errors are surfaced by the parent toast/session flow.
