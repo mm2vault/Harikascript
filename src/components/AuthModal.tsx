@@ -20,7 +20,21 @@ export const AuthModal: React.FC<AuthModalProps> = ({isOpen,onClose}) => {
       }else{const {error}=await supabase.auth.signInWithPassword({email:email.trim(),password});if(error)throw error;onClose();}
     }catch(e:any){setMessage(e?.message||'Giriş başarısız.')}finally{setBusy(false)}
   };
-  const google=async()=>{if(!supabase){setMessage('Supabase bağlantısı yok.');return;}const {error}=await supabase.auth.signInWithOAuth({provider:'google',options:{redirectTo:window.location.href}});if(error)setMessage(error.message)};
+  const google=async()=>{
+    if(!supabase){setMessage('Supabase bağlantısı yok.');return;}
+    setBusy(true); setMessage('Google girişine yönlendiriliyorsun...');
+    try{
+      const redirectTo = `${window.location.origin}${import.meta.env.BASE_URL || '/Harikascript/'}`;
+      const {error}=await supabase.auth.signInWithOAuth({
+        provider:'google',
+        options:{redirectTo}
+      });
+      if(error) throw error;
+    }catch(e:any){
+      setMessage(e?.message||'Google ile giriş başlatılamadı.');
+      setBusy(false);
+    }
+  };
   return <div className="fixed inset-0 z-[70] bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
     <div className="w-full max-w-md rounded-3xl bg-[#0d1019] border border-white/10 p-6 shadow-2xl">
       <div className="flex justify-between items-center"><div><h2 className="text-xl font-bold text-white">{mode==='login'?'Giriş Yap':'Hesap Oluştur'}</h2><p className="text-xs text-slate-400 mt-1">Google veya e-posta + kod/şifre.</p></div><button onClick={onClose} className="w-9 h-9 rounded-full bg-white/5 text-slate-400 flex items-center justify-center"><X className="w-4 h-4"/></button></div>
