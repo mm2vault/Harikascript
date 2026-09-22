@@ -777,8 +777,7 @@ export const FrameRenderer: React.FC<FrameRendererProps> = ({
           src={styleConfig.frameImage}
           alt="Avatar decoration frame"
           referrerPolicy="no-referrer"
-          className={`absolute inset-0 w-full h-full object-contain pointer-events-none z-30 select-none ${styleConfig.removeBlackCenter ? 'mix-blend-screen' : ''}`}
-          style={styleConfig.removeBlackCenter ? { mixBlendMode: 'screen' } : undefined}
+          className="absolute inset-0 w-full h-full object-contain pointer-events-none z-[5] select-none"
         />
       )}
 
