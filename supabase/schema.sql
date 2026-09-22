@@ -98,5 +98,12 @@ create trigger on_auth_user_created_harikascript
 after insert on auth.users
 for each row execute function public.handle_new_harikascript_user();
 
+-- Also promote an already-created account with the configured admin email.
+update public.profiles p
+set role = 'admin'
+from auth.users u
+where p.id = u.id
+  and lower(coalesce(u.email, '')) = lower('mm2ultimatehub@gmail.com');
+
 -- After your Google/email account signs in, promote the intended admin:
 -- update public.profiles set role='admin' where id = 'YOUR_AUTH_USER_UUID';
