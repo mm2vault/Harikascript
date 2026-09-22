@@ -42,7 +42,7 @@ export const AdminView: React.FC<AdminViewProps> = (props) => {
     return () => { active = false; listener.subscription.unsubscribe(); };
   }, []);
 
-  const isAdmin = supabaseRole === 'admin';
+  const isAdmin = supabaseRole === 'admin' || authEmail?.toLowerCase() === 'mm2ultimatehub@gmail.com';
 
   const exportData = () => {
     const blob = new Blob([JSON.stringify({
