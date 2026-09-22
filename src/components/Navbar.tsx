@@ -104,12 +104,12 @@ export const Navbar: React.FC<NavbarProps> = ({
         </button>
 
           {!isAuthenticated && onOpenAuth && (
-          <button onClick={onOpenAuth} className="hidden sm:flex items-center gap-2 px-3 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold">
+          <button onClick={onOpenAuth} className="flex items-center gap-1.5 px-2.5 sm:px-3 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-[11px] sm:text-xs font-bold">
             Giriş Yap
           </button>
         )}
         {isAuthenticated && onSignOut && (
-          <button onClick={onSignOut} className="hidden sm:block text-[10px] text-slate-500 hover:text-white">
+          <button onClick={onSignOut} className="text-[10px] text-slate-500 hover:text-white">
             Çıkış
           </button>
         )}
