@@ -29,7 +29,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
   return (
     <div
       id={`card-${product.id}`}
-      className="group relative rounded-3xl bg-[#0b0e16] border border-white/[0.08] hover:border-indigo-500/40 p-5 flex flex-col justify-between transition-all duration-300 shadow-xl hover:shadow-[0_12px_40px_rgba(0,0,0,0.6)]"
+      className="group relative rounded-2xl bg-[#0b0e16]/95 border border-white/[0.08] hover:border-indigo-500/40 p-4 sm:p-4 flex flex-col justify-between transition-all duration-300 shadow-xl hover:shadow-[0_12px_40px_rgba(0,0,0,0.6)]"
     >
       {/* Top Bar inside card: Animated Badge or Rarity */}
       <div className="flex items-center justify-between z-10 w-full mb-1">
@@ -67,13 +67,13 @@ export const ProductCard: React.FC<ProductCardProps> = ({
       </div>
 
       {/* Center Visual: Frame or Avatar Preview with Interactive Hover Try-On */}
-      <div className="relative my-4 flex items-center justify-center min-h-[190px]">
+      <div className="relative my-4 flex items-center justify-center min-h-[165px]">
         {product.category === 'frames' || product.frameType || product.frameStyle ? (
           <FrameRenderer
             frameType={product.frameType || product.id}
             frameStyle={product.frameStyle}
             avatarUrl={userAvatarUrl}
-            size="md"
+            size="sm"
             isAnimated={product.isAnimated}
           />
         ) : product.category === 'avatars' && product.previewImage ? (
@@ -104,7 +104,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
 
       {/* Content Info */}
       <div className="mt-1">
-        <h3 className="text-lg font-bold text-white tracking-tight font-heading group-hover:text-indigo-200 transition-colors">
+        <h3 className="text-base font-bold text-white tracking-tight font-heading group-hover:text-indigo-200 transition-colors">
           {product.name}
         </h3>
         <p className="text-xs text-slate-400 mt-1 min-h-[36px] line-clamp-2 leading-relaxed">
@@ -113,21 +113,21 @@ export const ProductCard: React.FC<ProductCardProps> = ({
       </div>
 
       {/* Price Section */}
-      <div className="mt-4 flex items-center gap-2">
+      <div className="mt-3 flex items-center gap-2">
         <div className="w-6 h-6 rounded-full bg-gradient-to-tr from-amber-600 via-amber-400 to-yellow-200 flex items-center justify-center shadow-[0_0_8px_rgba(245,158,11,0.5)]">
           <span className="text-[11px] font-black text-amber-950 leading-none">★</span>
         </div>
-        <span className="text-xl font-bold text-white tracking-tight font-heading">
+        <span className="text-lg font-bold text-white tracking-tight font-heading">
           {product.price.toLocaleString('tr-TR')}
         </span>
       </div>
 
       {/* Action Button: Matches exact screenshot blue pill button */}
-      <div className="mt-4">
+      <div className="mt-3">
         {isEquipped ? (
           <button
             disabled
-            className="w-full py-3 px-4 rounded-2xl bg-emerald-500/20 border border-emerald-500/50 text-emerald-300 font-semibold text-sm flex items-center justify-center gap-2 cursor-default"
+            className="w-full py-2.5 px-4 rounded-xl bg-emerald-500/20 border border-emerald-500/50 text-emerald-300 font-semibold text-sm flex items-center justify-center gap-2 cursor-default"
           >
             <Check className="w-4 h-4 text-emerald-400 stroke-[2.5]" />
             <span>Kullanımda</span>
