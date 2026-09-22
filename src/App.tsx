@@ -1122,6 +1122,9 @@ export default function App() {
               scripts={catalogScripts}
               games={catalogGames}
               products={allProducts}
+              onEditScript={(item) => setCustomScripts(prev => prev.map(x => x.id === item.id ? item : x))}
+              onEditGame={(item) => setCustomGames(prev => prev.map(x => x.id === item.id ? item : x))}
+              onEditProduct={(item) => setCustomProducts(prev => prev.map(x => x.id === item.id ? item : x))}
               onAddScript={(item) => setCustomScripts(prev => [{ ...item, creatorId: authUserId || undefined, creatorName: user.name, creatorTag: user.tag, creatorAvatarUrl: user.avatarUrl, creatorFrameId: user.equippedFrameId, creatorFrameStyle: allProducts.find(p => p.id === user.equippedFrameId)?.frameStyle }, ...prev])}
               onDeleteScript={(id) => id.startsWith('admin-') ? setCustomScripts(prev => prev.filter(x => x.id !== id)) : setDeletedScriptIds(prev => [...new Set([...prev, id])])}
               onAddGame={(item) => setCustomGames(prev => [item, ...prev])}
