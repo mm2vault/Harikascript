@@ -23,7 +23,7 @@ export const AdminView: React.FC<AdminViewProps> = (props) => {
   const [authEmail, setAuthEmail] = useState<string | null>(null);
   const [authMessage, setAuthMessage] = useState('');
   const [tab, setTab] = useState<'scripts' | 'games' | 'products'>('scripts');
-  const [form, setForm] = useState({ name:'', gameName:'', category:'custom', code:'', image:'', price:'500', link:'' });
+  const [form, setForm] = useState({ name:'', gameName:'', category:'custom', code:'', image:'', price:'500', link:'', removeBlackCenter: true });
 
   useEffect(() => {
     if (!isSupabaseConfigured || !supabase) return;
@@ -84,13 +84,17 @@ export const AdminView: React.FC<AdminViewProps> = (props) => {
       const item: Product = {
         id, name: form.name.trim(), category: 'frames', description: 'Admin tarafından eklenen kozmetik.',
         price: Math.max(0, Number(form.price) || 0), isAnimated: false,
-        previewImage: form.image, rarity: 'rare', tagText: 'ADMIN'
+        previewImage: form.image, rarity: 'rare', tagText: 'ADMIN',
+        frameStyle: form.image ? {
+          primaryColor: '#a78bfa', secondaryColor: '#7c3aed', accentColor: '#f5f3ff', glowColor: '#8b5cf6',
+          frameImage: form.image, removeBlackCenter: form.removeBlackCenter
+        } : undefined
       };
       props.onAddProduct(item);
       void upsertSharedCatalogItem('product', item).catch((e) => setAuthMessage(e.message));
     }
 
-    setForm({ name:'', gameName:'', category:'custom', code:'', image:'', price:'500', link:'' });
+    setForm({ name:'', gameName:'', category:'custom', code:'', image:'', price:'500', link:'', removeBlackCenter: true });
   };
 
   if (!isAdmin) {
