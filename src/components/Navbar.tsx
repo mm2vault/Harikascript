@@ -56,7 +56,7 @@ export const Navbar: React.FC<NavbarProps> = ({
         {/* Coin Balance Pill */}
         <div className="flex items-center bg-[#131622] border border-white/10 rounded-full pl-2.5 pr-1 py-1 gap-2 shadow-sm hover:border-amber-500/40 transition-colors">
           {/* Gold Coin Icon */}
-          <div className="w-5.5 h-5.5 rounded-full bg-gradient-to-tr from-amber-600 via-amber-400 to-yellow-200 flex items-center justify-center shadow-[0_0_8px_rgba(245,158,11,0.5)]">
+          <div className="w-6 h-6 rounded-full bg-gradient-to-tr from-amber-600 via-amber-400 to-yellow-200 flex items-center justify-center shadow-[0_0_8px_rgba(245,158,11,0.5)]">
             <span className="text-[11px] font-black text-amber-950 leading-none">★</span>
           </div>
 
