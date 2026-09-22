@@ -165,6 +165,7 @@ export default function App() {
       if (!alive) return;
       const authUser = session?.user;
       setIsAuthenticated(Boolean(authUser));
+      const savedAvatar = authUser?.id ? (() => { try { return localStorage.getItem('harika_avatar_' + authUser.id) || ''; } catch { return ''; } })() : '';
       setAuthUserId(authUser?.id || null);
       if (!authUser) return;
       const { data: profile } = await supabase.from('profiles').select('*').eq('id', authUser.id).maybeSingle();
@@ -174,7 +175,7 @@ export default function App() {
           ...prev,
           name: profile.name || authUser.user_metadata?.name || authUser.email?.split('@')[0] || prev.name,
           tag: profile.tag || ('#' + authUser.id.slice(0,4).toUpperCase()),
-          avatarUrl: profile.avatar_url || authUser.user_metadata?.avatar_url || prev.avatarUrl,
+          avatarUrl: profile.avatar_url || authUser.user_metadata?.avatar_url || savedAvatar || prev.avatarUrl,
           coins: typeof profile.coins === 'number' ? profile.coins : prev.coins,
           isPremium: Boolean(profile.is_premium),
           ownedProductIds: Array.isArray(profile.owned_product_ids) ? profile.owned_product_ids : prev.ownedProductIds,
@@ -189,7 +190,7 @@ export default function App() {
           id: authUser.id,
           name: authUser.user_metadata?.name || authUser.email?.split('@')[0] || 'Kullanıcı',
           tag: '#' + authUser.id.slice(0,4).toUpperCase(),
-          avatar_url: authUser.user_metadata?.avatar_url || '',
+          avatar_url: authUser.user_metadata?.avatar_url || savedAvatar || '',
           coins: 1450,
           role: 'user'
         }, { onConflict: 'id' });
@@ -402,6 +403,9 @@ export default function App() {
   // Update avatar
   const handleUpdateAvatar = (url: string) => {
     setUser((prev) => ({ ...prev, avatarUrl: url }));
+    if (authUserId) {
+      try { localStorage.setItem('harika_avatar_' + authUserId, url); } catch {}
+    }
     showToast('Avatar Güncellendi', 'Yeni görsel profilinde görüntülenecek.');
   };
 
