@@ -14,6 +14,9 @@ interface AdminViewProps {
   onDeleteGame: (id: string) => void;
   onAddProduct: (product: Product) => void;
   onDeleteProduct: (id: string) => void;
+  onEditScript: (item: ScriptItem) => void;
+  onEditGame: (item: GameItem) => void;
+  onEditProduct: (item: Product) => void;
   onReset: () => void;
   onOpenAuth?: () => void;
 }
@@ -23,7 +26,9 @@ export const AdminView: React.FC<AdminViewProps> = (props) => {
   const [authEmail, setAuthEmail] = useState<string | null>(null);
   const [authMessage, setAuthMessage] = useState('');
   const [tab, setTab] = useState<'scripts' | 'games' | 'products'>('scripts');
-  const [form, setForm] = useState({ name:'', gameName:'', category:'custom', code:'', image:'', price:'500', link:'', removeBlackCenter: true });
+  const emptyForm = { name:'', gameName:'', category:'custom', code:'', image:'', price:'500', link:'', removeBlackCenter: true };
+  const [form, setForm] = useState(emptyForm);
+  const [editingId, setEditingId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!isSupabaseConfigured || !supabase) return;
@@ -57,7 +62,7 @@ export const AdminView: React.FC<AdminViewProps> = (props) => {
   };
 
   const add = () => {
-    const id = 'admin-' + Date.now();
+    const id = editingId || ('admin-' + Date.now());
     if (!form.name.trim()) return;
 
     if (tab === 'scripts') {
@@ -70,7 +75,7 @@ export const AdminView: React.FC<AdminViewProps> = (props) => {
         downloads: 0, views: 0, status: 'active', version: '1.0',
         userName: 'HarikaScript Admin', rating: 5, ratingCount: 0, updatedAt: new Date().toISOString()
       };
-      props.onAddScript(item);
+      editingId ? props.onEditScript(item) : props.onAddScript(item);
       void upsertSharedCatalogItem('script', item).catch((e) => setAuthMessage(e.message));
     } else if (tab === 'games') {
       const item: GameItem = {
@@ -78,7 +83,7 @@ export const AdminView: React.FC<AdminViewProps> = (props) => {
         desc: 'Admin tarafından eklenen Roblox oyunu.', developer: 'HarikaScript',
         scriptCount: 0, activePlayers: '—', genre: form.category || 'Roblox'
       };
-      props.onAddGame(item);
+      editingId ? props.onEditGame(item) : props.onAddGame(item);
       void upsertSharedCatalogItem('game', item).catch((e) => setAuthMessage(e.message));
     } else {
       const item: Product = {
@@ -90,11 +95,11 @@ export const AdminView: React.FC<AdminViewProps> = (props) => {
           frameImage: form.image, removeBlackCenter: form.removeBlackCenter
         } : undefined
       };
-      props.onAddProduct(item);
+      editingId ? props.onEditProduct(item) : props.onAddProduct(item);
       void upsertSharedCatalogItem('product', item).catch((e) => setAuthMessage(e.message));
     }
 
-    setForm({ name:'', gameName:'', category:'custom', code:'', image:'', price:'500', link:'', removeBlackCenter: true });
+    setForm(emptyForm); setEditingId(null);
   };
 
   if (!isAdmin) {
@@ -168,7 +173,7 @@ export const AdminView: React.FC<AdminViewProps> = (props) => {
           </div>
           {tab==='scripts' && <textarea value={form.code} onChange={e=>setForm({...form,code:e.target.value})} placeholder="Loadstring / script kodu" className="input-admin md:col-span-2 min-h-28"/>}
         </div>
-        <button onClick={add} className="mt-4 px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold flex items-center gap-2"><Plus className="w-4 h-4"/> Ekle</button>
+        <button onClick={add} className="mt-4 px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold flex items-center gap-2"><Plus className="w-4 h-4"/>{editingId ? "Kaydet" : "Ekle"}</button>{editingId && <button onClick={()=>{setEditingId(null);setForm(emptyForm)}} className="mt-4 ml-2 px-4 py-2.5 rounded-xl bg-white/5 border border-white/10 text-slate-300 text-xs font-bold">İptal</button>}
       </div>
 
       <div className="space-y-2">
