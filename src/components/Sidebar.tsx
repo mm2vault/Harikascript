@@ -30,33 +30,34 @@ const FrameIcon: React.FC<{ className?: string }> = ({ className = 'w-5 h-5' }) 
 export const Sidebar: React.FC<SidebarProps> = ({ activeCategory, onSelectCategory, onOpenPremium, isPremium = false }) => {
   const navSections: { heading: string; items: { id: CategoryType; label: string; icon: React.ReactNode; badge?: string }[] }[] = [
     {
-      heading: 'İçerik & Scriptler',
+      heading: 'Market',
       items: [
-        { id: 'scripts', label: 'Roblox Scriptleri', icon: <FileCode2 className="w-4 h-4" />, badge: '90+' },
-        { id: 'games', label: 'Oyunlar', icon: <Gamepad2 className="w-4 h-4" /> },
-        { id: 'executors', label: 'Executor İndir', icon: <Cpu className="w-4 h-4" />, badge: 'Güncel' }
+        { id: 'all', label: 'Tümü', icon: <ShoppingBag className="w-4 h-4" /> },
+        { id: 'frames', label: 'Çerçeveler', icon: <FrameIcon className="w-4 h-4" />, badge: '160+' },
+        { id: 'avatars', label: 'Avatarlar', icon: <User className="w-4 h-4" /> },
+        { id: 'effects', label: 'Efektler', icon: <Sparkles className="w-4 h-4" /> },
+        { id: 'badges', label: 'Rozetler', icon: <Crown className="w-4 h-4" /> },
+        { id: 'inventory', label: 'Envanterim', icon: <Package className="w-4 h-4" /> }
       ]
     },
     {
-      heading: 'Kozmetik Mağazası',
+      heading: 'Platform',
       items: [
-        { id: 'frames', label: 'Çerçeveler', icon: <FrameIcon className="w-4 h-4" />, badge: '160+' },
-        { id: 'ai-studio', label: '✨ AI Çerçeve Atölyesi', icon: <Sparkles className="w-4 h-4 text-pink-400 animate-pulse" />, badge: 'YENİ' },
-        { id: 'avatars', label: 'Avatarlar', icon: <User className="w-4 h-4" /> },
-        { id: 'effects', label: 'Profil Efektleri', icon: <Sparkles className="w-4 h-4" /> },
-        { id: 'badges', label: 'Rozetler', icon: <Crown className="w-4 h-4" /> },
-        { id: 'inventory', label: 'Envanterim', icon: <Package className="w-4 h-4" /> },
+        { id: 'scripts', label: 'Scriptler', icon: <FileCode2 className="w-4 h-4" />, badge: '90+' },
+        { id: 'games', label: 'Oyunlar', icon: <Gamepad2 className="w-4 h-4" /> },
+        { id: 'executors', label: 'Executorlar', icon: <Cpu className="w-4 h-4" /> },
+        { id: 'ai-studio', label: 'AI Çerçeve Atölyesi', icon: <Sparkles className="w-4 h-4 text-pink-400" />, badge: 'YENİ' },
         { id: 'admin', label: 'Admin Paneli', icon: <ShieldCheck className="w-4 h-4 text-emerald-400" />, badge: 'ADMIN' }
       ]
     }
   ];
 
   return (
-    <aside className="hidden md:flex w-64 shrink-0 flex-col justify-between py-6 px-4 min-h-[calc(100vh-5rem)] border-r border-white/[0.06] bg-[#090b10]">
-      <div className="space-y-6">
+    <aside className="hidden md:flex w-[232px] shrink-0 flex-col justify-between py-5 px-3.5 min-h-[calc(100vh-72px)] border-r border-white/[0.06] bg-[#090b10]">
+      <div className="space-y-5">
         {navSections.map((section, sIdx) => (
           <div key={sIdx}>
-            <div className="text-[11px] font-bold uppercase tracking-wider text-slate-400 px-3 mb-2">{section.heading}</div>
+            <div className="text-[10px] font-bold uppercase tracking-[0.16em] text-slate-500 px-2.5 mb-2">{section.heading}</div>
             <nav className="space-y-1">
               {section.items.map((item) => {
                 const isActive = activeCategory === item.id;
@@ -65,7 +66,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeCategory, onSelectCatego
                     key={item.id}
                     id={`nav-${item.id}`}
                     onClick={() => onSelectCategory(item.id)}
-                    className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl font-medium text-sm transition-all duration-200 text-left relative ${isActive ? 'bg-[#15142a] text-white border border-indigo-500/40 shadow-[0_0_20px_rgba(99,102,241,0.15)]' : 'text-slate-400 hover:text-slate-200 hover:bg-white/[0.03]'}`}
+                    className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl font-medium text-[13px] transition-all duration-200 text-left relative ${isActive ? 'bg-[#15142a] text-white border border-indigo-500/40 shadow-[0_0_20px_rgba(99,102,241,0.15)]' : 'text-slate-400 hover:text-slate-200 hover:bg-white/[0.03]'}`}
                   >
                     {isActive && <span className="absolute left-0 top-2 bottom-2 w-1 rounded-r-full bg-gradient-to-b from-indigo-400 to-purple-500 shadow-[0_0_8px_rgba(99,102,241,0.8)]" />}
                     <div className="flex items-center gap-3">
@@ -81,7 +82,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeCategory, onSelectCatego
         ))}
       </div>
       <div className="mt-8">
-        <div className="relative rounded-2xl p-4 overflow-hidden border border-indigo-500/30 bg-gradient-to-b from-[#16142a] via-[#100e20] to-[#0d0c18] shadow-lg">
+        <div className="relative rounded-2xl p-4 overflow-hidden border border-indigo-500/30 bg-gradient-to-b from-[#16142a] via-[#100e20] to-[#0d0c18] shadow-lg shadow-indigo-950/20">
           <div className="absolute -top-12 -right-12 w-28 h-28 bg-purple-600/20 blur-2xl pointer-events-none rounded-full" />
           <div className="w-8 h-8 rounded-lg bg-indigo-500/10 border border-indigo-400/20 flex items-center justify-center text-indigo-300 mb-3">
             <Crown className="w-4 h-4 text-amber-300 stroke-[2]" />
