@@ -59,7 +59,10 @@ import { loadSharedCatalog, upsertSharedCatalogItem, deleteSharedCatalogItem } f
 import { AiFrameStudioModal } from './components/AiFrameStudioModal';
 import { AiFrameStudioView } from './components/AiFrameStudioView';
 import { AuthModal } from './components/AuthModal';
-import { supabase, isSupabaseConfigured } from './lib/supabase';
+import { firebaseAuth } from './lib/firebase';
+import { onAuthStateChanged } from 'firebase/auth';
+import { doc, getDoc, setDoc, updateDoc } from 'firebase/firestore';
+import { firebaseDb } from './lib/firebase';
 import confetti from 'canvas-confetti';
 
 // Custom Ornamental Frame Icon matching screenshot header
@@ -159,59 +162,58 @@ export default function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   useEffect(() => {
-    if (!isSupabaseConfigured || !supabase) return;
     let alive = true;
-    const applySession = async (session: any) => {
+    const unsubscribe = onAuthStateChanged(firebaseAuth, async (authUser) => {
       if (!alive) return;
-      const authUser = session?.user;
       setIsAuthenticated(Boolean(authUser));
-      const savedAvatar = authUser?.id ? (() => { try { return localStorage.getItem('harika_avatar_' + authUser.id) || ''; } catch { return ''; } })() : '';
-      setAuthUserId(authUser?.id || null);
+      setAuthUserId(authUser?.uid || null);
       if (!authUser) return;
-      const { data: profile } = await supabase.from('profiles').select('*').eq('id', authUser.id).maybeSingle();
+      const ref = doc(firebaseDb, 'users', authUser.uid);
+      const snap = await getDoc(ref);
       if (!alive) return;
-      if (profile) {
+      if (snap.exists()) {
+        const profile = snap.data() as any;
         setUser(prev => ({
           ...prev,
-          name: profile.name || authUser.user_metadata?.name || authUser.email?.split('@')[0] || prev.name,
-          tag: profile.tag || ('#' + authUser.id.slice(0,4).toUpperCase()),
-          avatarUrl: profile.avatar_url || authUser.user_metadata?.avatar_url || savedAvatar || prev.avatarUrl,
+          name: profile.name || authUser.displayName || authUser.email?.split('@')[0] || prev.name,
+          tag: profile.tag || ('#' + authUser.uid.slice(0,4).toUpperCase()),
+          avatarUrl: profile.avatarUrl || authUser.photoURL || prev.avatarUrl,
           coins: typeof profile.coins === 'number' ? profile.coins : prev.coins,
-          isPremium: Boolean(profile.is_premium),
-          ownedProductIds: Array.isArray(profile.owned_product_ids) ? profile.owned_product_ids : prev.ownedProductIds,
-          unlockedScriptIds: Array.isArray(profile.unlocked_script_ids) ? profile.unlocked_script_ids : prev.unlockedScriptIds,
-          equippedFrameId: profile.equipped_frame_id ?? prev.equippedFrameId,
-          equippedAvatarId: profile.equipped_avatar_id ?? prev.equippedAvatarId,
-          equippedEffectId: profile.equipped_effect_id ?? prev.equippedEffectId,
-          equippedBadgeId: profile.equipped_badge_id ?? prev.equippedBadgeId
+          isPremium: Boolean(profile.isPremium),
+          ownedProductIds: Array.isArray(profile.ownedProductIds) ? profile.ownedProductIds : prev.ownedProductIds,
+          unlockedScriptIds: Array.isArray(profile.unlockedScriptIds) ? profile.unlockedScriptIds : prev.unlockedScriptIds,
+          equippedFrameId: profile.equippedFrameId ?? prev.equippedFrameId,
+          equippedAvatarId: profile.equippedAvatarId ?? prev.equippedAvatarId,
+          equippedEffectId: profile.equippedEffectId ?? prev.equippedEffectId,
+          equippedBadgeId: profile.equippedBadgeId ?? prev.equippedBadgeId
         }));
       } else {
-        await supabase.from('profiles').upsert({
-          id: authUser.id,
-          name: authUser.user_metadata?.name || authUser.email?.split('@')[0] || 'Kullanıcı',
-          tag: '#' + authUser.id.slice(0,4).toUpperCase(),
-          avatar_url: authUser.user_metadata?.avatar_url || savedAvatar || '',
-          coins: 1450,
-          role: 'user'
-        }, { onConflict: 'id' });
+        await setDoc(ref, {
+          name: authUser.displayName || authUser.email?.split('@')[0] || 'Kullanıcı',
+          tag: '#' + authUser.uid.slice(0,4).toUpperCase(),
+          avatarUrl: authUser.photoURL || '',
+          coins: 1450, isPremium: false,
+          ownedProductIds: ['frame-siyah'],
+          unlockedScriptIds: ['bf_hoho', 'mm2_eclipse', 'bb_redz', 'fisch_speedhub'],
+          equippedFrameId: 'frame-siyah',
+          equippedAvatarId: null, equippedEffectId: null, equippedBadgeId: null
+        });
       }
-    };
-    supabase.auth.getSession().then(({data}) => applySession(data.session));
-    const {data: listener} = supabase.auth.onAuthStateChange((_event, session) => { void applySession(session); });
-    return () => { alive = false; listener.subscription.unsubscribe(); };
+    });
+    return () => { alive = false; unsubscribe(); };
   }, []);
 
   useEffect(() => {
-    if (!authUserId || !supabase) return;
+    if (!authUserId) return;
     const timer = window.setTimeout(() => {
-      void supabase.from('profiles').update({
-        name: user.name, tag: user.tag, avatar_url: user.avatarUrl,
-        coins: user.coins, is_premium: user.isPremium,
-        owned_product_ids: user.ownedProductIds, unlocked_script_ids: user.unlockedScriptIds,
-        equipped_frame_id: user.equippedFrameId, equipped_avatar_id: user.equippedAvatarId,
-        equipped_effect_id: user.equippedEffectId, equipped_badge_id: user.equippedBadgeId,
-        updated_at: new Date().toISOString()
-      }).eq('id', authUserId);
+      void updateDoc(doc(firebaseDb, 'users', authUserId), {
+        name: user.name, tag: user.tag, avatarUrl: user.avatarUrl,
+        coins: user.coins, isPremium: user.isPremium,
+        ownedProductIds: user.ownedProductIds, unlockedScriptIds: user.unlockedScriptIds,
+        equippedFrameId: user.equippedFrameId, equippedAvatarId: user.equippedAvatarId,
+        equippedEffectId: user.equippedEffectId, equippedBadgeId: user.equippedBadgeId,
+        updatedAt: new Date().toISOString()
+      }).catch(() => {});
     }, 400);
     return () => window.clearTimeout(timer);
   }, [authUserId, user]);
@@ -243,7 +245,7 @@ export default function App() {
   useEffect(() => { localStorage.setItem('harika_admin_deleted_games_v1', JSON.stringify(deletedGameIds)); }, [deletedGameIds]);
   useEffect(() => { localStorage.setItem('harika_admin_deleted_products_v1', JSON.stringify(deletedProductIds)); }, [deletedProductIds]);
 
-  // Supabase configured ise admin/catalog verisini tüm cihazlar için ortaklaştır.
+  // Firebase Firestore ile admin kataloğunu tüm cihazlarda ortaklaştır.
   useEffect(() => {
     let cancelled = false;
     loadSharedCatalog().then((shared) => {
@@ -260,7 +262,7 @@ export default function App() {
           return [...map.values()];
         });
       }
-    }).catch(() => { /* Supabase kurulmadıysa local fallback devam eder. */ });
+    }).catch(() => { /* Firebase kurulumu/rules hazır değilse local fallback devam eder. */ });
     return () => { cancelled = true; };
   }, []);
 
