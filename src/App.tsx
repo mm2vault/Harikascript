@@ -503,7 +503,7 @@ export default function App() {
     }
 
     return list;
-  }, [activeCategory, searchQuery, sortBy, user.ownedProductIds, allProducts]);
+  }, [activeCategory, searchQuery, sortBy, frameGenderFilter, user.ownedProductIds, allProducts]);
 
   // Filtered Scripts
   const filteredScripts = useMemo(() => {
@@ -531,6 +531,19 @@ export default function App() {
     return list;
   }, [activeCategory, scriptGameFilter, searchQuery, user.unlockedScriptIds, catalogScripts]);
 
+  // Equip any cosmetic type
+  const handleEquipProduct = (product: Product) => {
+    setUser((prev) => ({
+      ...prev,
+      equippedFrameId: product.category === 'frames' ? product.id : prev.equippedFrameId,
+      equippedAvatarId: product.category === 'avatars' ? product.id : prev.equippedAvatarId,
+      equippedEffectId: product.category === 'effects' ? product.id : prev.equippedEffectId,
+      equippedBadgeId: product.category === 'badges' ? product.id : prev.equippedBadgeId
+    }));
+    triggerTaskProgress('equip_cosmetic');
+    showToast('Kullanıldı!', `${product.name} profiline uygulandı.`);
+  };
+
   // Buy cosmetic
   const handleConfirmPurchase = (product: Product) => {
     if (user.coins < product.price) {
@@ -544,7 +557,13 @@ export default function App() {
       coins: prev.coins - product.price,
       ownedProductIds: [...prev.ownedProductIds, product.id],
       equippedFrameId:
-        product.category === 'frames' ? product.id : prev.equippedFrameId
+        product.category === 'frames' ? product.id : prev.equippedFrameId,
+      equippedAvatarId:
+        product.category === 'avatars' ? product.id : prev.equippedAvatarId,
+      equippedEffectId:
+        product.category === 'effects' ? product.id : prev.equippedEffectId,
+      equippedBadgeId:
+        product.category === 'badges' ? product.id : prev.equippedBadgeId
     }));
 
     confetti({ particleCount: 60, spread: 70, origin: { y: 0.7 } });
@@ -581,9 +600,14 @@ export default function App() {
   };
 
   // Quick copy script
-  const handleQuickCopyScript = (script: ScriptItem) => {
-    triggerTaskProgress('copy_script');
-    showToast('Kopyalandı!', `"${script.name}" panoya kopyalandı.`);
+  const handleQuickCopyScript = async (script: ScriptItem) => {
+    try {
+      await navigator.clipboard.writeText(script.code);
+      triggerTaskProgress('copy_script');
+      showToast('Kopyalandı!', `"${script.name}" kodu panoya kopyalandı.`);
+    } catch {
+      showToast('Kopyalama başarısız', 'Tarayıcı pano izni vermedi. Scripti açıp kodu manuel kopyalayabilirsin.', 'warning');
+    }
   };
 
   // Select game -> filter scripts
@@ -644,10 +668,10 @@ export default function App() {
 
         {/* Content Canvas */}
         <main className="flex-1 min-w-0 p-4 sm:p-6 lg:p-7 overflow-y-auto">
-          <div className="md:hidden mb-4 flex gap-2 overflow-x-auto pb-1">
-            {(['scripts','games','frames','inventory','admin'] as CategoryType[]).map(cat => (
+          <div className="md:hidden mb-4 flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
+            {(['all','frames','avatars','effects','badges','inventory','scripts','games','executors','ai-studio','admin'] as CategoryType[]).map(cat => (
               <button key={cat} onClick={() => setActiveCategory(cat)} className={`whitespace-nowrap px-3 py-2 rounded-xl text-[11px] font-bold border ${activeCategory===cat?'bg-indigo-600 border-indigo-500 text-white':'bg-white/5 border-white/10 text-slate-400'}`}>
-                {cat==='scripts'?'📜 Scripts':cat==='games'?'🎮 Oyunlar':cat==='frames'?'✨ Kozmetik':cat==='inventory'?'🎒 Envanter':'🛡️ Admin'}
+                {cat==='all'?'🛍️ Tümü':cat==='frames'?'✨ Çerçeveler':cat==='avatars'?'👤 Avatarlar':cat==='effects'?'💫 Efektler':cat==='badges'?'🏆 Rozetler':cat==='inventory'?'🎒 Envanter':cat==='scripts'?'📜 Scriptler':cat==='games'?'🎮 Oyunlar':cat==='executors'?'⚙️ Executorlar':cat==='ai-studio'?'✨ AI Atölye':'🛡️ Admin'}
               </button>
             ))}
           </div>
@@ -915,10 +939,17 @@ export default function App() {
                         userAvatarUrl={user.avatarUrl}
                         onBuy={(prod) => setPurchasingProduct(prod)}
                         onEquip={(prod) => {
-                          if (prod.category === 'frames') {
-                            handleEquipFrame(isEquipped ? null : prod.id);
+                          if (isEquipped) {
+                            setUser((prev) => ({
+                              ...prev,
+                              equippedFrameId: prod.category === 'frames' ? null : prev.equippedFrameId,
+                              equippedAvatarId: prod.category === 'avatars' ? null : prev.equippedAvatarId,
+                              equippedEffectId: prod.category === 'effects' ? null : prev.equippedEffectId,
+                              equippedBadgeId: prod.category === 'badges' ? null : prev.equippedBadgeId
+                            }));
+                            showToast('Kozmetik Çıkarıldı', `${prod.name} profilinden kaldırıldı.`, 'info');
                           } else {
-                            showToast('Kullanıldı!', `${prod.name} profiline uygulandı.`);
+                            handleEquipProduct(prod);
                           }
                         }}
                         onPreview={(prod) => {
@@ -1032,12 +1063,17 @@ export default function App() {
                         key={product.id}
                         product={product}
                         isOwned={true}
-                        isEquipped={user.equippedFrameId === product.id}
+                        isEquipped={
+                          user.equippedFrameId === product.id ||
+                          user.equippedAvatarId === product.id ||
+                          user.equippedEffectId === product.id ||
+                          user.equippedBadgeId === product.id
+                        }
                         userCoins={user.coins}
                         userAvatarUrl={user.avatarUrl}
                         onBuy={() => {}}
-                        onEquip={(prod) => handleEquipFrame(user.equippedFrameId === prod.id ? null : prod.id)}
-                        onPreview={(prod) => handleEquipFrame(prod.id)}
+                        onEquip={(prod) => handleEquipProduct(prod)}
+                        onPreview={(prod) => handleEquipProduct(prod)}
                       />
                     ))}
                   </div>
