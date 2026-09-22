@@ -4,6 +4,7 @@ import { GameItem, Product, ScriptItem } from '../types';
 import { firebaseAuth } from '../lib/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
 import { upsertSharedCatalogItem, deleteSharedCatalogItem } from '../lib/catalogSync';
+import { uploadUserImage } from '../lib/storage';
 
 interface AdminViewProps {
   scripts: ScriptItem[];
@@ -152,13 +153,17 @@ export const AdminView: React.FC<AdminViewProps> = (props) => {
                 type="file"
                 accept="image/*"
                 className="hidden"
-                onChange={(e) => {
+                onChange={async (e) => {
                   const file = e.target.files?.[0];
                   if (!file) return;
-                  const reader = new FileReader();
-                  reader.onload = () => setForm(prev => ({ ...prev, image: String(reader.result || '') }));
-                  reader.readAsDataURL(file);
-                  e.currentTarget.value = '';
+                  try {
+                    const url = await uploadUserImage(file, 'cosmetics');
+                    setForm(prev => ({ ...prev, image: url }));
+                  } catch (err: any) {
+                    setAuthMessage(err?.message || 'Görsel yüklenemedi.');
+                  } finally {
+                    e.currentTarget.value = '';
+                  }
                 }}
               />
             </label>
