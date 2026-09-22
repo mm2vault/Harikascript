@@ -71,7 +71,17 @@ export const ProductCard: React.FC<ProductCardProps> = ({
         {product.category === 'frames' || product.frameType || product.frameStyle ? (
           <FrameRenderer
             frameType={product.frameType || product.id}
-            frameStyle={product.frameStyle}
+            frameStyle={
+              product.frameStyle ||
+              (product.previewImage
+                ? {
+                    primaryColor: '#6366f1',
+                    secondaryColor: '#a855f7',
+                    glowColor: 'rgba(99,102,241,0.75)',
+                    frameImage: product.previewImage
+                  }
+                : undefined)
+            }
             avatarUrl={userAvatarUrl}
             size="sm"
             isAnimated={product.isAnimated}
@@ -114,7 +124,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
 
       {/* Price Section */}
       <div className="mt-3 flex items-center gap-2">
-        <div className="w-5.5 h-5.5 rounded-full bg-gradient-to-tr from-amber-600 via-amber-400 to-yellow-200 flex items-center justify-center shadow-[0_0_8px_rgba(245,158,11,0.5)]">
+        <div className="w-6 h-6 rounded-full bg-gradient-to-tr from-amber-600 via-amber-400 to-yellow-200 flex items-center justify-center shadow-[0_0_8px_rgba(245,158,11,0.5)]">
           <span className="text-[11px] font-black text-amber-950 leading-none">★</span>
         </div>
         <span className="text-base font-bold text-white tracking-tight font-heading">
