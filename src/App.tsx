@@ -99,8 +99,8 @@ export default function App() {
       subtitle: 'PC ve Mobil (Android) için test edilmiş çalışan Roblox executorları.'
     },
     frames: {
-      title: 'Discord & Neon Çerçeveler',
-      subtitle: 'Profilini Discord Nitro tarzı parlayan çerçevelerle özelleştir!'
+      title: 'Çerçeveler',
+      subtitle: 'Profilini Discord Nitro tarzı parlayan çerçevelerle özelleştir.'
     },
     avatars: {
       title: 'Avatarlar',
@@ -643,7 +643,7 @@ export default function App() {
         />
 
         {/* Content Canvas */}
-        <main className="flex-1 p-5 sm:p-8 overflow-y-auto">
+        <main className="flex-1 min-w-0 p-4 sm:p-6 lg:p-7 overflow-y-auto">
           <div className="md:hidden mb-4 flex gap-2 overflow-x-auto pb-1">
             {(['scripts','games','frames','inventory','admin'] as CategoryType[]).map(cat => (
               <button key={cat} onClick={() => setActiveCategory(cat)} className={`whitespace-nowrap px-3 py-2 rounded-xl text-[11px] font-bold border ${activeCategory===cat?'bg-indigo-600 border-indigo-500 text-white':'bg-white/5 border-white/10 text-slate-400'}`}>
@@ -660,13 +660,13 @@ export default function App() {
           />
 
           {/* Page Heading & Search Filter Bar */}
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-6 mb-6 border-b border-white/[0.08]">
-            <div className="flex items-start gap-3">
-              <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-indigo-500/20 to-purple-500/10 border border-indigo-500/30 flex items-center justify-center text-indigo-300 shrink-0 shadow-lg shadow-indigo-500/5">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-5 mb-5 border-b border-white/[0.08]">
+            <div className="flex items-start gap-3.5">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500/20 to-purple-500/10 border border-indigo-500/30 flex items-center justify-center text-indigo-300 shrink-0 shadow-lg shadow-indigo-500/5">
                 <SectionFrameIcon className="w-5 h-5 text-indigo-300" />
               </div>
               <div>
-                <h2 className="text-xl sm:text-2xl font-bold text-white tracking-tight font-heading flex items-center gap-2">
+                <h2 className="text-xl sm:text-[22px] font-bold text-white tracking-tight font-heading flex items-center gap-2">
                   <span>{categoryHeaders[activeCategory]?.title || 'Mağaza'}</span>
                   {activeCategory === 'frames' && (
                     <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-cyan-500/10 text-cyan-300 border border-cyan-500/30">
