@@ -1,6 +1,6 @@
 import React from 'react';
 import { ShoppingBag, Plus, Bell, Sparkles } from 'lucide-react';
-import { UserState } from '../types';
+import { UserState, FrameStyleConfig } from '../types';
 import { FrameRenderer } from './FrameRenderer';
 
 interface NavbarProps {
@@ -13,6 +13,7 @@ interface NavbarProps {
   isAuthenticated?: boolean;
   onOpenAuth?: () => void;
   onSignOut?: () => void;
+  equippedFrameStyle?: FrameStyleConfig;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -24,7 +25,8 @@ export const Navbar: React.FC<NavbarProps> = ({
   hasUnreadNotifications = true,
   isAuthenticated = false,
   onOpenAuth,
-  onSignOut
+  onSignOut,
+  equippedFrameStyle
 }) => {
   // Format coin balance with dot separator like in the screenshot (e.g. 1.250)
   const formatCoins = (amount: number) => {
@@ -124,6 +126,7 @@ export const Navbar: React.FC<NavbarProps> = ({
           <div className="relative">
             <FrameRenderer
               frameType={user.equippedFrameId || 'none'}
+              frameStyle={equippedFrameStyle}
               avatarUrl={user.avatarUrl}
               size="xs"
               isAnimated={true}
