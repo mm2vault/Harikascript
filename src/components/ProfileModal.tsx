@@ -129,7 +129,17 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
             <div className="relative shrink-0">
               <FrameRenderer
                 frameType={equippedFrame?.frameType || user.equippedFrameId}
-                frameStyle={equippedFrame?.frameStyle}
+                frameStyle={
+                  equippedFrame?.frameStyle ||
+                  (equippedFrame?.previewImage
+                    ? {
+                        primaryColor: '#6366f1',
+                        secondaryColor: '#a855f7',
+                        glowColor: 'rgba(99,102,241,0.75)',
+                        frameImage: equippedFrame.previewImage
+                      }
+                    : undefined)
+                }
                 avatarUrl={user.avatarUrl}
                 size="md"
                 isAnimated={animationsEnabled}
