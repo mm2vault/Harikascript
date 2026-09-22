@@ -159,7 +159,7 @@ export default function App() {
 
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [authUserId, setAuthUserId] = useState<string | null>(null);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);\n  const [profileLoaded, setProfileLoaded] = useState(false);
 
   useEffect(() => {
     let alive = true;
@@ -216,7 +216,7 @@ export default function App() {
       }).catch(() => {});
     }, 400);
     return () => window.clearTimeout(timer);
-  }, [authUserId, user]);
+  }, [authUserId, profileLoaded, user]);
 
   // Save to localStorage
   useEffect(() => {
@@ -664,7 +664,7 @@ export default function App() {
         hasUnreadNotifications={hasUnreadNotifications}
         isAuthenticated={isAuthenticated}
         onOpenAuth={() => setIsAuthModalOpen(true)}
-        onSignOut={async () => { if (supabase) await supabase.auth.signOut(); setIsAuthenticated(false); setAuthUserId(null); }}
+        onSignOut={async () => { await firebaseAuth.signOut(); setIsAuthenticated(false); setAuthUserId(null); setProfileLoaded(false); }}
         equippedFrameStyle={equippedFrameStyle}
       />
 
