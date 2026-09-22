@@ -1,10 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { ShieldCheck, Plus, Trash2, Download, RotateCcw, LockKeyhole, FileCode2, Gamepad2, Frame } from 'lucide-react';
 import { GameItem, Product, ScriptItem } from '../types';
-import { supabase, isSupabaseConfigured } from '../lib/supabase';
+import { supabase } from '../lib/supabase';
 import { upsertSharedCatalogItem, deleteSharedCatalogItem } from '../lib/catalogSync';
-
-const ADMIN_EMAIL = 'mm2ultimatehub@gmail.com';
 
 interface AdminViewProps {
   scripts: ScriptItem[];
@@ -17,11 +15,10 @@ interface AdminViewProps {
   onAddProduct: (product: Product) => void;
   onDeleteProduct: (id: string) => void;
   onReset: () => void;
+  onOpenAuth?: () => void;
 }
 
 export const AdminView: React.FC<AdminViewProps> = (props) => {
-  const [email, setEmail] = useState('');
-  const [loggedIn, setLoggedIn] = useState(false);
   const [supabaseRole, setSupabaseRole] = useState<string | null>(null);
   const [authEmail, setAuthEmail] = useState<string | null>(null);
   const [authMessage, setAuthMessage] = useState('');
@@ -45,15 +42,7 @@ export const AdminView: React.FC<AdminViewProps> = (props) => {
     return () => { active = false; listener.subscription.unsubscribe(); };
   }, []);
 
-  const loginWithGoogle = async () => {
-    if (!supabase) return;
-    setAuthMessage('Google giriş penceresi açılıyor...');
-    const redirectTo = `${window.location.origin}${window.location.pathname}`;
-    const { error } = await supabase.auth.signInWithOAuth({ provider: 'google', options: { redirectTo } });
-    if (error) setAuthMessage(error.message);
-  };
-
-  const isAdmin = authEmail?.trim().toLowerCase() === ADMIN_EMAIL || supabaseRole === 'admin' || (!isSupabaseConfigured && loggedIn && email.trim().toLowerCase() === ADMIN_EMAIL);
+  const isAdmin = authEmail?.trim().toLowerCase() === ADMIN_EMAIL || supabaseRole === 'admin';
 
   const exportData = () => {
     const blob = new Blob([JSON.stringify({
@@ -113,18 +102,11 @@ export const AdminView: React.FC<AdminViewProps> = (props) => {
           </div>
           <h2 className="text-2xl font-bold text-white font-heading">Admin Paneli</h2>
           <p className="text-sm text-slate-400 mt-2">Ortak katalog için güvenli Supabase yöneticisiyle giriş yap.</p>
-          {isSupabaseConfigured ? (
-            <>
-              <button onClick={loginWithGoogle} className="mt-5 w-full rounded-xl bg-white text-slate-900 px-4 py-3 text-sm font-bold hover:bg-slate-100">Google ile Yönetici Girişi</button>
-              <p className="text-[11px] text-slate-500 mt-3">Giriş: {authEmail || 'yapılmadı'} · Rol: {supabaseRole || 'user'}</p>
-            </>
-          ) : (
-            <>
-              <input value={email} onChange={e=>setEmail(e.target.value)} onKeyDown={e=>{if(e.key==='Enter')setLoggedIn(true)}} placeholder="Admin e-posta" className="mt-5 w-full rounded-xl bg-black/30 border border-white/10 px-4 py-3 text-sm text-white outline-none focus:border-indigo-500" />
-              <button onClick={()=>setLoggedIn(true)} className="mt-3 w-full rounded-xl bg-indigo-600 hover:bg-indigo-500 px-4 py-3 text-sm font-bold text-white">Yerel Yönetici Girişi</button>
-              <p className="text-[11px] text-amber-300/70 mt-3">Supabase ayarlanınca bu yerel giriş kaldırılarak gerçek rol kontrolü kullanılır.</p>
-            </>
-          )}
+          <>
+            <button onClick={props.onOpenAuth} className="mt-5 w-full rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-3 text-sm font-bold">Giriş Yap / Hesap Oluştur</button>
+            <p className="text-[11px] text-slate-500 mt-3">Admin yetkisi yalnızca doğrulanmış Supabase hesabından kontrol edilir.</p>
+            <p className="text-[11px] text-slate-500 mt-1">Mevcut oturum: {authEmail || 'yok'} · Rol: {supabaseRole || 'user'}</p>
+          </>
           {authMessage && <p className="text-[11px] text-rose-300 mt-3">{authMessage}</p>}
         </div>
       </div>
