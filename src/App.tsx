@@ -1084,6 +1084,7 @@ export default function App() {
                 setDeletedScriptIds([]); setDeletedGameIds([]); setDeletedProductIds([]);
                 showToast('Admin verileri sıfırlandı', 'Yerel katalog varsayılan haline döndü.', 'info');
               }}
+              onOpenAuth={() => setIsAuthModalOpen(true)}
             />
           )}
 
