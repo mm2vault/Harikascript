@@ -24,6 +24,8 @@ export interface FrameStyleConfig {
   animationEffect?: 'pulse' | 'spin' | 'shimmer' | 'bounce' | 'wave' | 'glitch' | 'aurora' | 'flame' | 'rainbow' | 'vortex' | 'electric';
   customSvg?: string;
   frameImage?: string;
+  /** When true, black pixels in an uploaded frame/GIF visually blend away so the avatar remains visible. */
+  removeBlackCenter?: boolean;
   particleType?: 'embers' | 'sparkles' | 'petals' | 'hearts' | 'matrix' | 'lightning' | 'bubbles' | 'none';
   auraSize?: number;
 }
